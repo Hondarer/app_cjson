@@ -51,12 +51,15 @@ GITIGNORE_TARGETS = {
 }
 
 
+GITIGNORE_HEADER = "# app/cjson/packages 配下の zip から展開される生成物。手動改変しないため Git 管理対象外とする。\n"
+
+
 def ensure_gitignore(app_dir):
     for rel_parts, names in GITIGNORE_TARGETS.items():
         dir_path = os.path.join(app_dir, *rel_parts)
         os.makedirs(dir_path, exist_ok=True)
         gitignore_path = os.path.join(dir_path, ".gitignore")
-        content = "".join(f"/{name}\n" for name in names)
+        content = GITIGNORE_HEADER + "".join(f"/{name}\n" for name in names)
         tmp_path = gitignore_path + ".tmp"
         with open(tmp_path, "w", encoding="utf-8") as f:
             f.write(content)
