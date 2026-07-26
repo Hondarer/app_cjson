@@ -1,5 +1,3 @@
-# app/cjson/packages 配下の zip から展開される生成物 (cJSON.c 内部が
-# #include "cJSON.h" という相対インクルードを使うため、サブディレクトリを
-# 切らず本ディレクトリ直下に展開する)。手動改変しないため Git 管理対象外とする。
+# app/cjson/packages 配下の zip から展開される生成物。手動改変しないため Git 管理対象外とする。
 /cJSON.h
 /cJSON_Utils.h
