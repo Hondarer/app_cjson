@@ -1,7 +1,7 @@
 # cjson
 
 このリポジトリは [c-modernization-kit](https://github.com/Hondarer/c-modernization-kit) の `app/cjson` としてサブモジュール管理される、個別アプリ リポジトリです。  
-`app/com_util`、`app/porter` と同様に、c-modernization-kit のワークスペース内 (`framework/makefw` 等と組み合わせた make ビルド環境) で利用することを前提としたラッパー リポジトリであり、本リポジトリ単体ではビルドできません。
+c-modernization-kit のワークスペース内 (`framework/makefw` 等と組み合わせた make ビルド環境) で利用することを前提としたラッパー リポジトリであり、本リポジトリ単体ではビルドできません。
 
 ## 概要
 
