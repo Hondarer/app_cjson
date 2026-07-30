@@ -1,7 +1,3 @@
-# ビルド済みライブラリの検索パス
-LIBSDIR += \
-	$(MYAPP_DIR)/prod/lib
-
 # ライブラリの指定
 #
 # 本テストは cJSON.c/cJSON_Utils.c 自体のカバレッジ計測ではなく、
