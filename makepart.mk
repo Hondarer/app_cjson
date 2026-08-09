@@ -22,3 +22,26 @@ ifndef MAKEFW_SYNC_EVAL
         $(error cJSON パッケージの準備に失敗しました。上記のメッセージに従って app/cjson/packages にアーカイブを配置してください)
     endif
 endif
+
+# 警告抑制 (app/makepart.mk の GCC_WARN_BASE) について:
+#
+# cJSON 本体 (cJSON.c / cJSON_Utils.c および展開ヘッダー) は upstream 側の設計
+# であり、本リポジトリ側ではソースを改変しない方針のため実装スタイルを変更
+# できない。本リポジトリは警告抑制フラグ (-Wno-*) を原則使わない方針だが
+# (see: framework/makefw/docs/gcc-warning-guide/README.md)、lua/sqlite と同様に
+# ソース非改変を優先し、cJSON 本体に起因する以下の警告に限り app/cjson 配下の
+# コンパイル オプションで例外的に抑制する。
+#
+# - -Wconversion / -Wsign-conversion: 暗黙の型変換と符号変換 (上流実装全体に及び、
+#   改変せずに解消できない)
+#
+# -Wpadded は extract_package.py が cJSON.h へ diagnostic pragma を付与するため、
+# ここでは抑制しない。
+#
+# app/makepart.mk (親階層) で CFLAGS/CXXFLAGS に GCC_WARN_BASE が設定された後、
+# makepart.mk は親から子の順に評価されるため、ここで追記する -Wno-* は
+# 常に元の -W* より後方に置かれ、GCC 上で有効に上書きできる。
+ifdef PLATFORM_LINUX
+    CFLAGS   += -Wno-conversion -Wno-sign-conversion
+    CXXFLAGS += -Wno-conversion -Wno-sign-conversion
+endif
