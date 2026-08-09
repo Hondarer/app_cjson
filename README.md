@@ -7,7 +7,7 @@ c-modernization-kit のワークスペース内 (`framework/makefw` 等と組み
 
 [cJSON](https://github.com/DaveGamble/cJSON) (MIT License) のコア機能 (cJSON.c / cJSON.h) および拡張ユーティリティ (cJSON_Utils.c / cJSON_Utils.h)  
 を、c-modernization-kit の makefw 規約に沿って取り込んだラッパー ライブラリです。  
-cJSON のリリース アーカイブからソースを展開して利用します。
+cJSON のリリース アーカイブからソースを展開して利用します。  
 生成する `cJSON.h` には、upstream の構造体レイアウトを変更せずに `-Wpadded` を抑制する GCC diagnostic pragma を付加します。
 
 ビルド成果物は動的ライブラリのみです。
@@ -30,7 +30,7 @@ cJSON のリリース アーカイブからソースを展開して利用しま�
   ```
 
 配置後、`make` (または `make test`) を実行すると、 `app/cjson/bin/extract_package.py` が自動的に `prod/include/`, `prod/libsrc/cjson/` へ展開します。  
-展開時に `cJSON.h` 全体を GCC diagnostic push/pop で囲むため、このヘッダーをインクルードする app では個別の `-Wpadded` 抑制が不要です。
+展開時に `cJSON.h` 全体を GCC diagnostic push/pop で囲むため、このヘッダーをインクルードする app では個別の `-Wpadded` 抑制が不要です。  
 展開先はいずれも生成物であり `.gitignore` 対象です。
 
 `packages/` にアーカイブが存在しない状態で `make` を実行すると、ビルドはエラーで停止し、配置方法の案内が表示されます。
@@ -57,7 +57,7 @@ cJSON は MIT License です。ライセンス条文の正本は `packages/cJSON
 
 ## テスト用モック
 
-`test/lib/libmock_cjson.a` は、cJSON を利用する app の単体テストで使用する Google Mock 対応ライブラリです。
+`test/lib/libmock_cjson.a` は、cJSON を利用する app の単体テストで使用する Google Mock 対応ライブラリです。  
 `cJSON.h` と `cJSON_Utils.h` の公開関数を対象とし、`Mock_cjson` を生成しない場合と、生成後に個別の動作を指定しない場合は、`libcjson` の実関数を呼び出します。
 
 テスト コードでは `mock_cjson.h` をインクルードし、テスト対象の `makepart.mk` では `cjson` の代わりに `mock_cjson` をリンクします。
@@ -70,7 +70,7 @@ endif
 LIBS += mock_cjson
 ```
 
-Windows では、`CJSON_HIDE_SYMBOLS` により cJSON の DLL import 宣言を無効にし、`mock_cjson` が提供する実シンボルを参照します。
+Windows では、`CJSON_HIDE_SYMBOLS` により cJSON の DLL import 宣言を無効にし、`mock_cjson` が提供する実シンボルを参照します。  
 実関数への委譲では、Linux の `LD_LIBRARY_PATH` または Windows の `PATH` から `libcjson` を読み込みます。
 
 振る舞いを変更するテストでは、`Mock_cjson` を生成して `EXPECT_CALL` または `ON_CALL` を指定します。

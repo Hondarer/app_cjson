@@ -46,7 +46,7 @@ CJSON_HEADER_SUFFIX = b"""
 # 展開対象: zip 内のファイル名 -> 展開先 (プレースホルダーは app_dir からの相対パス)
 #
 # cJSON.c / cJSON_Utils.c は内部で #include "cJSON.h" のように同一ディレクトリ
-# 相対 (ダブルクォート) インクルードを使う。サブディレクトリ (cjson/ 等) に
+# 相対 (ダブル クォート) インクルードを使う。サブディレクトリ (cjson/ 等) に
 # ヘッダーを配置すると、コンパイラの include 検索パス (-I prod/include) だけでは
 # 解決できず cJSON 自身のビルドが失敗するため、prod/include 直下に配置する
 # (app/calc の calc.h / calcbase.h と同じ「直下アンブレラ ヘッダー」パターン)。
