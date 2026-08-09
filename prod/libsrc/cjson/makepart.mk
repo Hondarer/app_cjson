@@ -8,5 +8,15 @@
 # (このディレクトリの makefile/makepart.mk 自体は手書きファイルであり、
 #  通常どおり規範・clang-format の対象とする)
 
-# LIB_TYPE は指定しない (デフォルト static -> libcjson.a)。
-# shared 版は作らない。
+ifdef PLATFORM_WINDOWS
+    # DLL 本体のビルド時だけ公開 API をエクスポートする。
+    DEFINES += CJSON_EXPORT_SYMBOLS
+else ifdef PLATFORM_LINUX
+    # 公開 API 以外を hidden とし、CJSON_PUBLIC のシンボルだけを公開する。
+    DEFINES += CJSON_API_VISIBILITY
+    CFLAGS   += -fvisibility=hidden
+    CXXFLAGS += -fvisibility=hidden
+endif
+
+# 静的ライブラリは生成せず、Linux では .so、Windows では .dll を生成する。
+LIB_TYPE = shared

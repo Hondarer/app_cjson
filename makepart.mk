@@ -22,16 +22,3 @@ ifndef MAKEFW_SYNC_EVAL
         $(error cJSON パッケージの準備に失敗しました。上記のメッセージに従って app/cjson/packages にアーカイブを配置してください)
     endif
 endif
-
-# CJSON_HIDE_SYMBOLS:
-# libcjson は static のみを生成し、shared ライブラリ (例: libcom_util.so) へ
-# 取り込む用途を想定する。既定の CJSON_EXPORT_SYMBOLS のままだと Windows で
-# dllexport 付きオブジェクトが共有ライブラリへ再エクスポートされうるため、
-# 埋め込み向けにシンボルを非公開にする。
-# Linux では default visibility のままでは shared へ取り込まれた後も
-# 動的シンボルとして露出するため、-fvisibility=hidden を併用する。
-DEFINES += CJSON_HIDE_SYMBOLS
-ifdef PLATFORM_LINUX
-    CFLAGS   += -fvisibility=hidden
-    CXXFLAGS += -fvisibility=hidden
-endif

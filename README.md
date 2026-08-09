@@ -10,7 +10,12 @@ c-modernization-kit のワークスペース内 (`framework/makefw` 等と組み
 cJSON のリリース アーカイブからソースを展開して利用します。
 生成する `cJSON.h` には、upstream の構造体レイアウトを変更せずに `-Wpadded` を抑制する GCC diagnostic pragma を付加します。
 
-ビルド成果物は静的ライブラリ (`libcjson.a` (Linux) / `libcjson.lib` (Windows)) のみです (shared 版は生成しません)。
+ビルド成果物は動的ライブラリのみです。
+
+- Linux: `libcjson.so`
+- Windows: `libcjson.dll` およびリンク用の import library `libcjson.lib`
+
+静的ライブラリ (`libcjson.a` および静的リンク用の `libcjson.lib`) は生成しません。
 
 ## パッケージの配置手順 (初回セットアップ)
 
@@ -43,7 +48,7 @@ cJSON のリリース アーカイブからソースを展開して利用しま�
 
 cJSON は MIT License です。ライセンス条文の正本は `packages/cJSON-<version>.zip` 内の `LICENSE` です。  
 展開後は参考コピーとして `prod/libsrc/cjson/LICENSE.cjson` (生成物、.gitignore 対象) にも配置されます。  
-`libcjson.a` / `libcjson.lib` を利用したアプリケーションを配布する際は、MIT License に従い、著作権表示、MIT ライセンス本文、無保証・免責条項 を含めてください。
+`libcjson.so` または `libcjson.dll` を利用したアプリケーションを配布する際は、MIT License に従い、著作権表示、MIT ライセンス本文、無保証・免責条項を含めてください。
 
 ## サンプルとテスト
 

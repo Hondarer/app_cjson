@@ -18,7 +18,14 @@ sys.stderr.reconfigure(encoding="utf-8")
 PACKAGE_NAME_PATTERN = re.compile(r"^cJSON-.*\.zip$", re.IGNORECASE)
 VERSION_PATTERN = re.compile(r"^cJSON-(\d+)\.(\d+)\.(\d+)\.zip$", re.IGNORECASE)
 
-CJSON_HEADER_WARNING_PREFIX = b"""/* Suppress padding warnings from the upstream layout.
+CJSON_HEADER_PREFIX = b"""/* Use DLL import by default for Windows consumers. */
+#if defined(__WINDOWS__) || defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
+#if !defined(CJSON_HIDE_SYMBOLS) && !defined(CJSON_IMPORT_SYMBOLS) && !defined(CJSON_EXPORT_SYMBOLS)
+#define CJSON_IMPORT_SYMBOLS
+#endif
+#endif
+
+/* Suppress padding warnings from the upstream layout.
  * see: https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html */
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
@@ -26,7 +33,7 @@ CJSON_HEADER_WARNING_PREFIX = b"""/* Suppress padding warnings from the upstream
 #endif
 
 """
-CJSON_HEADER_WARNING_SUFFIX = b"""
+CJSON_HEADER_SUFFIX = b"""
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
@@ -163,8 +170,8 @@ def needs_extraction(zip_path, app_dir):
     with open(header, "rb") as f:
         header_data = f.read()
     if not (
-        header_data.startswith(CJSON_HEADER_WARNING_PREFIX)
-        and header_data.endswith(CJSON_HEADER_WARNING_SUFFIX)
+        header_data.startswith(CJSON_HEADER_PREFIX)
+        and header_data.endswith(CJSON_HEADER_SUFFIX)
     ):
         return True
 
@@ -173,7 +180,7 @@ def needs_extraction(zip_path, app_dir):
 
 def prepare_extracted_data(src_name, data):
     if src_name == "cJSON.h":
-        return CJSON_HEADER_WARNING_PREFIX + data + CJSON_HEADER_WARNING_SUFFIX
+        return CJSON_HEADER_PREFIX + data + CJSON_HEADER_SUFFIX
     return data
 
 
