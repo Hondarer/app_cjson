@@ -54,3 +54,32 @@ cJSON は MIT License です。ライセンス条文の正本は `packages/cJSON
 
 - `prod/src/cmd/cjson_sample/` : cJSON の最小利用例
 - `test/src/cmd/cjsonTest/` : 動作テスト
+
+## テスト用モック
+
+`test/lib/libmock_cjson.a` は、cJSON を利用する app の単体テストで使用する Google Mock 対応ライブラリです。
+`cJSON.h` と `cJSON_Utils.h` の公開関数を対象とし、`Mock_cjson` を生成しない場合と、生成後に個別の動作を指定しない場合は、`libcjson` の実関数を呼び出します。
+
+テスト コードでは `mock_cjson.h` をインクルードし、テスト対象の `makepart.mk` では `cjson` の代わりに `mock_cjson` をリンクします。
+
+```makefile
+ifdef PLATFORM_WINDOWS
+    DEFINES += CJSON_HIDE_SYMBOLS
+endif
+
+LIBS += mock_cjson
+```
+
+Windows では、`CJSON_HIDE_SYMBOLS` により cJSON の DLL import 宣言を無効にし、`mock_cjson` が提供する実シンボルを参照します。
+実関数への委譲では、Linux の `LD_LIBRARY_PATH` または Windows の `PATH` から `libcjson` を読み込みます。
+
+振る舞いを変更するテストでは、`Mock_cjson` を生成して `EXPECT_CALL` または `ON_CALL` を指定します。
+
+```cpp
+NiceMock<Mock_cjson> mock_cjson;
+
+EXPECT_CALL(mock_cjson, cJSON_Parse(StrEq("{}")))
+    .WillOnce(Return(nullptr));
+```
+
+テスト用のポインターを返すように変更した場合は、実関数がそのポインターを解放しないよう、対応する `cJSON_Delete` や `cJSON_free` の動作も必要に応じて指定してください。
