@@ -18,6 +18,20 @@ sys.stderr.reconfigure(encoding="utf-8")
 PACKAGE_NAME_PATTERN = re.compile(r"^cJSON-.*\.zip$", re.IGNORECASE)
 VERSION_PATTERN = re.compile(r"^cJSON-(\d+)\.(\d+)\.(\d+)\.zip$", re.IGNORECASE)
 
+CJSON_HEADER_WARNING_PREFIX = b"""/* Suppress padding warnings from the upstream layout.
+ * see: https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html */
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored \"-Wpadded\"
+#endif
+
+"""
+CJSON_HEADER_WARNING_SUFFIX = b"""
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+"""
+
 # 展開対象: zip 内のファイル名 -> 展開先 (プレースホルダーは app_dir からの相対パス)
 #
 # cJSON.c / cJSON_Utils.c は内部で #include "cJSON.h" のように同一ディレクトリ
@@ -35,6 +49,7 @@ EXTRACT_TARGETS = {
 
 # 再展開要否の判定に使う代表ファイル
 MARKER_TARGET = ("prod", "libsrc", "cjson", "cJSON.c")
+CJSON_HEADER_TARGET = ("prod", "include", "cJSON.h")
 
 # 生成物を除外するための .gitignore を配置するディレクトリと、その内容。
 #
@@ -141,7 +156,25 @@ def needs_extraction(zip_path, app_dir):
     marker = os.path.join(app_dir, *MARKER_TARGET)
     if not os.path.isfile(marker):
         return True
+
+    header = os.path.join(app_dir, *CJSON_HEADER_TARGET)
+    if not os.path.isfile(header):
+        return True
+    with open(header, "rb") as f:
+        header_data = f.read()
+    if not (
+        header_data.startswith(CJSON_HEADER_WARNING_PREFIX)
+        and header_data.endswith(CJSON_HEADER_WARNING_SUFFIX)
+    ):
+        return True
+
     return os.path.getmtime(zip_path) > os.path.getmtime(marker)
+
+
+def prepare_extracted_data(src_name, data):
+    if src_name == "cJSON.h":
+        return CJSON_HEADER_WARNING_PREFIX + data + CJSON_HEADER_WARNING_SUFFIX
+    return data
 
 
 def extract(zip_path, app_dir):
@@ -158,7 +191,7 @@ def extract(zip_path, app_dir):
             if member is None:
                 print(f"ERROR: zip 内に {src_name} が見つかりません: {zip_path}", file=sys.stderr)
                 return False
-            data = zf.read(member)
+            data = prepare_extracted_data(src_name, zf.read(member))
             tmp_path = dest_path + ".tmp"
             with open(tmp_path, "wb") as f:
                 f.write(data)

@@ -7,7 +7,8 @@ c-modernization-kit のワークスペース内 (`framework/makefw` 等と組み
 
 [cJSON](https://github.com/DaveGamble/cJSON) (MIT License) のコア機能 (cJSON.c / cJSON.h) および拡張ユーティリティ (cJSON_Utils.c / cJSON_Utils.h)  
 を、c-modernization-kit の makefw 規約に沿って取り込んだラッパー ライブラリです。  
-cJSON 自体のソースは改変せず、リリース アーカイブをそのまま展開して利用します。
+cJSON のリリース アーカイブからソースを展開して利用します。
+生成する `cJSON.h` には、upstream の構造体レイアウトを変更せずに `-Wpadded` を抑制する GCC diagnostic pragma を付加します。
 
 ビルド成果物は静的ライブラリ (`libcjson.a` (Linux) / `libcjson.lib` (Windows)) のみです (shared 版は生成しません)。
 
@@ -24,6 +25,7 @@ cJSON 自体のソースは改変せず、リリース アーカイブをその�
   ```
 
 配置後、`make` (または `make test`) を実行すると、 `app/cjson/bin/extract_package.py` が自動的に `prod/include/`, `prod/libsrc/cjson/` へ展開します。  
+展開時に `cJSON.h` 全体を GCC diagnostic push/pop で囲むため、このヘッダーをインクルードする app では個別の `-Wpadded` 抑制が不要です。
 展開先はいずれも生成物であり `.gitignore` 対象です。
 
 `packages/` にアーカイブが存在しない状態で `make` を実行すると、ビルドはエラーで停止し、配置方法の案内が表示されます。

@@ -23,20 +23,15 @@ ifndef MAKEFW_SYNC_EVAL
     endif
 endif
 
-# -Wpadded (app/makepart.mk の GCC_WARN_BASE) の抑制について:
-#
-# cJSON.h の構造体は upstream (外部) 側の設計であり、本リポジトリ側では
-# ソースを改変しない方針のためレイアウトを変更できない。本リポジトリは
-# 警告抑制フラグ (-Wno-*) を原則使わない方針だが
-# (see: framework/makefw/docs/gcc-warning-guide/README.md)、
-# 今回はソース非改変を優先し、cJSON.h に起因する -Wpadded 警告に限り
-# app/cjson 配下のコンパイル オプションで例外的に抑制する。
-#
-# app/makepart.mk (親階層) で CFLAGS/CXXFLAGS に -Wpadded が設定された後、
-# makepart.mk は親から子の順に評価されるため、ここで追記する -Wno-padded は
-# 常に -Wpadded より後方に置かれ、GCC 上で有効に上書きできる。
-# MSVC は -W 系オプションを解釈できないため Linux 限定で追記する。
+# CJSON_HIDE_SYMBOLS:
+# libcjson は static のみを生成し、shared ライブラリ (例: libcom_util.so) へ
+# 取り込む用途を想定する。既定の CJSON_EXPORT_SYMBOLS のままだと Windows で
+# dllexport 付きオブジェクトが共有ライブラリへ再エクスポートされうるため、
+# 埋め込み向けにシンボルを非公開にする。
+# Linux では default visibility のままでは shared へ取り込まれた後も
+# 動的シンボルとして露出するため、-fvisibility=hidden を併用する。
+DEFINES += CJSON_HIDE_SYMBOLS
 ifdef PLATFORM_LINUX
-    CFLAGS   += -Wno-padded
-    CXXFLAGS += -Wno-padded
+    CFLAGS   += -fvisibility=hidden
+    CXXFLAGS += -fvisibility=hidden
 endif
