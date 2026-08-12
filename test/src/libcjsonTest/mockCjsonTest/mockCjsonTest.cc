@@ -62,3 +62,33 @@ TEST(mockCjsonTest, overrides_result)
     // Assert
     EXPECT_EQ(&expected, actual); // [確認_正常系] - cJSON_Parse の戻り値が expected のアドレスであること。
 }
+
+// 実オブジェクトを生成せずに Parse / GetStringValue / Delete を単体隔離できることの確認
+TEST(mockCjsonTest, isolates_parse_and_string_value_without_real_object)
+{
+    // Arrange
+    NiceMock<Mock_cjson> mock_cjson;
+    cJSON item = {};
+    item.valuestring = const_cast<char *>("name"); // [状態] - valuestring が name の cJSON オブジェクトを用意する。
+
+    // Pre-Assert
+    EXPECT_CALL(mock_cjson, cJSON_Parse(StrEq("{}")))
+        .WillOnce(Return(&item)); // [Pre-Assert確認_正常系] - cJSON_Parse が {} を指定して 1 回呼び出されること。
+                                  // [Pre-Assert手順] - cJSON_Parse から item のアドレスを返却する。
+    EXPECT_CALL(mock_cjson, cJSON_GetStringValue(&item))
+        .WillOnce(Return(
+            item.valuestring)); // [Pre-Assert確認_正常系] - cJSON_GetStringValue が item を指定して 1 回呼び出されること。
+                                // [Pre-Assert手順] - cJSON_GetStringValue から name を返却する。
+    EXPECT_CALL(mock_cjson, cJSON_Delete(&item))
+        .WillOnce(Return()); // [Pre-Assert確認_正常系] - cJSON_Delete が item を指定して 1 回呼び出されること。
+                             // [Pre-Assert手順] - cJSON_Delete から直ちに戻る。
+
+    // Act
+    cJSON *actual = cJSON_Parse("{}");          // [手順] - cJSON_Parse を呼び出す。
+    char *value = cJSON_GetStringValue(actual); // [手順] - cJSON_GetStringValue で文字列を取得する。
+    cJSON_Delete(actual);                       // [手順] - cJSON_Delete でオブジェクトを解放する。
+
+    // Assert
+    EXPECT_EQ(&item, actual);    // [確認_正常系] - cJSON_Parse の戻り値が item のアドレスであること。
+    EXPECT_STREQ("name", value); // [確認_正常系] - cJSON_GetStringValue の戻り値が name であること。
+}

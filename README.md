@@ -54,13 +54,16 @@ cJSON は MIT License です。ライセンス条文の正本は `packages/cJSON
 
 - `prod/src/cmd/cjson_sample/` : cJSON の最小利用例
 - `test/src/cmd/cjsonTest/` : 動作テスト
+- `test/src/libcjsonTest/mockCjsonTest/` : cJSON API モックの動作テスト
+- `test/src/libcjsonTest/exportTest/` : 公開関数のモック対象漏れを検出するテスト
 
 ## テスト用モック
 
 `test/lib/libmock_cjson.a` は、cJSON を利用する app の単体テストで使用する Google Mock 対応ライブラリです。  
 `cJSON.h` と `cJSON_Utils.h` の公開関数を対象とし、`Mock_cjson` を生成しない場合と、生成後に個別の動作を指定しない場合は、`libcjson` の実関数を呼び出します。
 
-テスト コードでは `mock_cjson.h` をインクルードし、テスト対象の `makepart.mk` では `cjson` の代わりに `mock_cjson` をリンクします。
+テスト コードでは `mock_cjson.h` をインクルードし、テスト対象の `makepart.mk` では `cjson` の代わりに `mock_cjson` をリンクします。  
+`cjson` と `mock_cjson` を同時にリンクしないでください。Linux では実ライブラリの強シンボルが弱定義のモックを上書きし、`EXPECT_CALL` が効かなくなります。
 
 ```makefile
 ifdef PLATFORM_WINDOWS
@@ -82,4 +85,10 @@ EXPECT_CALL(mock_cjson, cJSON_Parse(StrEq("{}")))
     .WillOnce(Return(nullptr));
 ```
 
-テスト用のポインターを返すように変更した場合は、実関数がそのポインターを解放しないよう、対応する `cJSON_Delete` や `cJSON_free` の動作も必要に応じて指定してください。
+実オブジェクトを生成せずに単体隔離する場合は、SUT が呼び出す関数をすべてスタブしてください。  
+スタブしていない呼び出しは実関数へ委譲されるため、偽ポインターを渡すと実関数が失敗します。
+
+テスト用のポインターを返すように変更した場合は、実関数がそのポインターを解放しないよう、対応する `cJSON_Delete` や `cJSON_free` の動作も指定してください。
+
+`cJSON` は公開構造体です。`item->valuestring` や `cJSON_ArrayForEach`、`cJSON_SetIntValue`、`cJSON_SetBoolValue` はフィールドを直接読み書きするため、関数モックでは差し替えられません。  
+偽ポインターを返す場合は、SUT がフィールドへアクセスしないこと、またはテスト側で `cJSON` グラフを組み立てることを確認してください。
