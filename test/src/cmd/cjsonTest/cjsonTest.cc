@@ -7,6 +7,7 @@ class cjsonTest : public Test
 {
 };
 
+// JSON のパース結果が元の値と一致することの確認
 TEST_F(cjsonTest, parse_and_print_roundtrip)
 {
     // Arrange
@@ -31,6 +32,7 @@ TEST_F(cjsonTest, parse_and_print_roundtrip)
     cJSON_Delete(root);
 }
 
+// 不正な JSON のパースが NULL を返すことの確認
 TEST_F(cjsonTest, parse_invalid_json_returns_null)
 {
     // Arrange
@@ -45,6 +47,7 @@ TEST_F(cjsonTest, parse_invalid_json_returns_null)
     EXPECT_EQ(nullptr, root); // [確認_異常系] - cJSON_Parse の戻り値が NULL であること。
 }
 
+// MergePatch が patch を適用することの確認
 TEST_F(cjsonTest, utils_merge_patch_applies_patch)
 {
     // Arrange
