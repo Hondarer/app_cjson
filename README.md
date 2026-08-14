@@ -1,5 +1,7 @@
 # cjson
 
+作業前に [作業規則](AGENTS.md) を確認してください。
+
 このリポジトリは [c-modernization-kit](https://github.com/Hondarer/c-modernization-kit) の `app/cjson` としてサブモジュール管理される、個別アプリ リポジトリです。  
 c-modernization-kit のワークスペース内 (`framework/makefw` 等と組み合わせた make ビルド環境) で利用することを前提としたラッパー リポジトリであり、本リポジトリ単体ではビルドできません。
 
@@ -9,6 +11,8 @@ c-modernization-kit のワークスペース内 (`framework/makefw` 等と組み
 を、c-modernization-kit の makefw 規約に沿って取り込んだラッパー ライブラリです。  
 cJSON のリリース アーカイブからソースを展開して利用します。  
 生成する `cJSON.h` には、upstream の構造体レイアウトを変更せずに `-Wpadded` を抑制する GCC diagnostic pragma を付加します。
+
+cJSON を利用するプログラムの単体テスト向けに、Google Mock 対応の cJSON API モックも含みます。
 
 ビルド成果物は動的ライブラリのみです。
 
@@ -40,7 +44,7 @@ cJSON のリリース アーカイブからソースを展開して利用しま�
 
 ## バージョン更新手順
 
-1. 新しいバージョンの zip を取得し、`app/cjson/packages/` に追加する。
+1. 新しいバージョンの zip を取得し、`app/cjson/packages/` に追加します。
 2. 古いバージョンの zip を削除する (`packages/` には常に 1 個のみを置く運用)。
 3. `make` を実行すると、新しい zip のタイムスタンプが展開済み生成物より新しいと判定され、自動的に再展開されます。
 
