@@ -112,10 +112,10 @@ Mock_cjson::Mock_cjson()
 #undef MOCK_CJSON_VOID
 #undef MOCK_CJSON_RET
 
-    _mock_cjson = this;
+    TESTFW_REGISTER_MOCK_INSTANCE(_mock_cjson);
 }
 
 Mock_cjson::~Mock_cjson()
 {
-    _mock_cjson = nullptr;
+    TESTFW_UNREGISTER_MOCK_INSTANCE(_mock_cjson);
 }
