@@ -28,20 +28,8 @@ CJSON_HEADER_PREFIX = b"""/* Use DLL import by default for Windows consumers. */
 #define CJSON_IMPORT_SYMBOLS
 #endif
 #endif
-
-/* Suppress padding warnings from the upstream layout.
- * see: https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html */
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored \"-Wpadded\"
-#endif
-
 """
-CJSON_HEADER_SUFFIX = b"""
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
-"""
+LEGACY_PADDING_PRAGMA = b'#pragma GCC diagnostic ignored "-Wpadded"'
 
 # 展開対象: zip 内のファイル名 -> 展開先 (プレースホルダーは app_dir からの相対パス)
 #
@@ -268,10 +256,7 @@ def needs_extraction(zip_path, app_dir):
     header = os.path.join(app_dir, *CJSON_HEADER_TARGET)
     with open(header, "rb") as f:
         header_data = f.read()
-    if not (
-        header_data.startswith(CJSON_HEADER_PREFIX)
-        and header_data.endswith(CJSON_HEADER_SUFFIX)
-    ):
+    if not header_data.startswith(CJSON_HEADER_PREFIX) or LEGACY_PADDING_PRAGMA in header_data:
         return True
 
     return os.path.getmtime(zip_path) > os.path.getmtime(marker)
@@ -279,7 +264,7 @@ def needs_extraction(zip_path, app_dir):
 
 def prepare_extracted_data(src_name, data):
     if src_name == "cJSON.h":
-        return CJSON_HEADER_PREFIX + data + CJSON_HEADER_SUFFIX
+        return CJSON_HEADER_PREFIX + data
     return data
 
 

@@ -8,6 +8,13 @@
 # (このディレクトリの makefile/makepart.mk 自体は手書きファイルであり、
 #  通常どおり規範・clang-format の対象とする)
 
+# 外来ヘッダーの警告は SYSTEM_INCDIR で利用側から分離する。
+# upstream の一次ソース自体に残る変換警告だけを、このリーフで抑制する。
+ifdef PLATFORM_LINUX
+    CFLAGS   += -Wno-conversion -Wno-sign-conversion
+    CXXFLAGS += -Wno-conversion -Wno-sign-conversion
+endif
+
 ifdef PLATFORM_WINDOWS
     # DLL 本体のビルド時だけ公開 API をエクスポートする。
     DEFINES += CJSON_EXPORT_SYMBOLS
