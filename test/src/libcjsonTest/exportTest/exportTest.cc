@@ -1,6 +1,7 @@
 #include <testfw.h>
 
 #include <cJSON.h>
+#include <cJSON_Integer.h>
 #include <cJSON_Utils.h>
 
 #include <set>
@@ -50,6 +51,6 @@ TEST(exportTest, cjson_symbols_match_api_table)
     }
 
     // Assert
-    EXPECT_EQ(expected, actual);   // [確認_正常系] - libcjson の全公開関数名が mock_cjson の API 表と一致すること。
-    EXPECT_EQ(92u, actual.size()); // [確認_正常系] - libcjson の公開関数数が 92 であること。
+    EXPECT_EQ(expected, actual);    // [確認_正常系] - libcjson の全公開関数名が mock_cjson の API 表と一致すること。
+    EXPECT_EQ(109u, actual.size()); // [確認_正常系] - libcjson の公開関数数が 109 であること。
 }

@@ -1,0 +1,12 @@
+--- a/prod/include/cJSON.h
++++ b/prod/include/cJSON.h
+@@ -1,3 +1,9 @@
++/* Use DLL import by default for Windows consumers. */
++#if defined(__WINDOWS__) || defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
++#if !defined(CJSON_HIDE_SYMBOLS) && !defined(CJSON_IMPORT_SYMBOLS) && !defined(CJSON_EXPORT_SYMBOLS)
++#define CJSON_IMPORT_SYMBOLS
++#endif
++#endif
+ /*
+   Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
+ 

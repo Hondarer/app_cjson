@@ -1,0 +1,58 @@
+--- a/prod/libsrc/cjson/cJSON.c
++++ b/prod/libsrc/cjson/cJSON.c
+@@ -58,6 +58,9 @@
+ 
+ #include "cJSON.h"
+ 
++/* PATCH: 正確な整数の保持と出力 (app/cjson の整数拡張) */
++#include <cJSON_Integer_internal.h>
++
+ /* define our own boolean type */
+ #ifdef true
+ #undef true
+@@ -401,6 +404,11 @@
+ 
+     item->type = cJSON_Number;
+ 
++    /* PATCH: 小数点も指数も含まないトークンは、正確な整数として保持する。
++       トークンの妥当性は cjson_internal_integer_store_text が検証する。 */
++    cjson_internal_integer_store_text(item, (const char*)number_c_string,
++                                      (size_t)(after_end - number_c_string));
++
+     input_buffer->offset += (size_t)(after_end - number_c_string);
+     /* free the temporary buffer */
+     input_buffer->hooks.deallocate(number_c_string);
+@@ -410,6 +418,9 @@
+ /* don't ask me, but the original cJSON_SetNumberValue returns an integer or double */
+ CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
+ {
++    /* PATCH: double で上書きするため、保持している正確な整数を破棄する */
++    cjson_internal_integer_clear(object);
++
+     if (number >= INT_MAX)
+     {
+         object->valueint = INT_MAX;
+@@ -608,6 +619,11 @@
+     {
+         length = sprintf((char*)number_buffer, "null");
+     }
++    /* PATCH: 正確な整数を保持していれば、その十進表記をそのまま出力する */
++    else if (cjson_internal_integer_text(item) != NULL)
++    {
++        length = sprintf((char*)number_buffer, "%s", cjson_internal_integer_text(item));
++    }
+     else if(d == (double)item->valueint)
+     {
+         length = sprintf((char*)number_buffer, "%d", item->valueint);
+@@ -3093,6 +3109,11 @@
+             return true;
+ 
+         case cJSON_Number:
++            /* PATCH: 双方が正確な整数を保持していれば、正規形の一致で比較する */
++            if ((cjson_internal_integer_text(a) != NULL) && (cjson_internal_integer_text(b) != NULL))
++            {
++                return (cJSON_bool)(strcmp(cjson_internal_integer_text(a), cjson_internal_integer_text(b)) == 0);
++            }
+             if (compare_double(a->valuedouble, b->valuedouble))
+             {
+                 return true;

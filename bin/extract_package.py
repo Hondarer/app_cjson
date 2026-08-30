@@ -4,6 +4,10 @@
 packages/ 配下の cJSON アーカイブ (zip) を prod/include/cjson,
 prod/libsrc/cjson へ展開する。外部ツール (unzip 等) に依存せず、
 標準ライブラリ zipfile のみを使用する。
+
+展開後、patches/ 配下の unified diff (framework/makefw/bin/apply_patches.py)
+を順に適用する。zip の内容は加工せずそのまま書き出し、cJSON 本体への
+改変はすべてパッチ側で行う。
 """
 
 import argparse
@@ -15,21 +19,13 @@ import sys
 import tempfile
 import time
 import zipfile
+from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
 
 PACKAGE_NAME_PATTERN = re.compile(r"^cJSON-.*\.zip$", re.IGNORECASE)
 VERSION_PATTERN = re.compile(r"^cJSON-(\d+)\.(\d+)\.(\d+)\.zip$", re.IGNORECASE)
-
-CJSON_HEADER_PREFIX = b"""/* Use DLL import by default for Windows consumers. */
-#if defined(__WINDOWS__) || defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
-#if !defined(CJSON_HIDE_SYMBOLS) && !defined(CJSON_IMPORT_SYMBOLS) && !defined(CJSON_EXPORT_SYMBOLS)
-#define CJSON_IMPORT_SYMBOLS
-#endif
-#endif
-"""
-LEGACY_PADDING_PRAGMA = b'#pragma GCC diagnostic ignored "-Wpadded"'
 
 # 展開対象: zip 内のファイル名 -> 展開先 (プレースホルダーは app_dir からの相対パス)
 #
@@ -46,10 +42,11 @@ EXTRACT_TARGETS = {
     "LICENSE": ("prod", "libsrc", "cjson", "LICENSE.cjson"),
 }
 
-# 再展開要否の判定に使う代表ファイル
+# 展開後、パッチ適用前に代表ファイルを最後に置換する順序に使う。
 MARKER_SOURCE = "cJSON.c"
-MARKER_TARGET = ("prod", "libsrc", "cjson", "cJSON.c")
-CJSON_HEADER_TARGET = ("prod", "include", "cJSON.h")
+
+# 再展開要否の判定に使うスタンプ ファイル。
+STAMP_FILENAME = "make_extract.stamp"
 
 # 生成物を除外するための .gitignore を配置するディレクトリと、その内容。
 #
@@ -248,27 +245,60 @@ def find_member(names, filename):
     return matches[0] if matches else None
 
 
-def needs_extraction(zip_path, app_dir):
+def stamp_path(app_dir):
+    return os.path.join(app_dir, STAMP_FILENAME)
+
+
+def compute_stamp_fields(zip_path, selected_name, patches_dir, apply_patches_mod):
+    """スタンプへ書き出す項目を辞書で返す。zip の stat とパッチ系列の
+    digest のみを使い、展開先ファイルの内容はハッシュしない
+    (makepart.mk から 1 ビルドで何十回も起動されるため軽量さを優先する)。
+    """
+    st = os.stat(zip_path)
+    return {
+        "package": selected_name,
+        "zip_mtime": repr(st.st_mtime),
+        "zip_size": str(st.st_size),
+        "patches_digest": apply_patches_mod.series_digest(Path(patches_dir)),
+    }
+
+
+def read_stamp(path):
+    """スタンプ ファイルを {キー: 値} で返す。読めない場合は None。"""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return None
+
+    fields = {}
+    for line in lines:
+        if not line or "=" not in line:
+            return None
+        key, _, value = line.partition("=")
+        fields[key] = value
+    return fields
+
+
+def write_stamp(path, fields):
+    content = "".join(f"{key}={value}\n" for key, value in fields.items())
+    atomic_replace(path, content)
+
+
+def needs_extraction(zip_path, app_dir, selected_name, patches_dir, apply_patches_mod):
     if any(not os.path.isfile(path) for path in iter_target_paths(app_dir)):
         return True
 
-    marker = os.path.join(app_dir, *MARKER_TARGET)
-    header = os.path.join(app_dir, *CJSON_HEADER_TARGET)
-    with open(header, "rb") as f:
-        header_data = f.read()
-    if not header_data.startswith(CJSON_HEADER_PREFIX) or LEGACY_PADDING_PRAGMA in header_data:
+    current = read_stamp(stamp_path(app_dir))
+    if current is None:
         return True
 
-    return os.path.getmtime(zip_path) > os.path.getmtime(marker)
-
-
-def prepare_extracted_data(src_name, data):
-    if src_name == "cJSON.h":
-        return CJSON_HEADER_PREFIX + data
-    return data
+    expected = compute_stamp_fields(zip_path, selected_name, patches_dir, apply_patches_mod)
+    return current != expected
 
 
 def extract(zip_path, app_dir):
+    """zip の内容を加工せず、EXTRACT_TARGETS の展開先へそのまま書き出す。"""
     dest_paths = {}
     for src_name, rel_parts in EXTRACT_TARGETS.items():
         dest_path = os.path.join(app_dir, *rel_parts)
@@ -287,9 +317,12 @@ def extract(zip_path, app_dir):
             if member is None:
                 print(f"ERROR: zip 内に {src_name} が見つかりません: {zip_path}", file=sys.stderr)
                 return False
-            data = prepare_extracted_data(src_name, zf.read(member))
+            data = zf.read(member)
             atomic_replace(dest_path, data)
 
+    # パッチ適用がこの後ファイルを書き換え、mtime は適用時刻になる。
+    # これはパッチ変更時に make がソースの更新を検知するために必要な
+    # 正しい挙動であり、パッチ適用後に mtime を zip の値へ戻さないこと。
     zip_mtime = os.path.getmtime(zip_path)
     for dest_path in dest_paths.values():
         os.utime(dest_path, (zip_mtime, zip_mtime))
@@ -299,9 +332,19 @@ def extract(zip_path, app_dir):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--app-dir", required=True)
+    parser.add_argument(
+        "--makefw-home",
+        required=True,
+        help="framework/makefw のパス。<makefw-home>/bin を sys.path へ加えて "
+        "apply_patches を import するために使う。",
+    )
     args = parser.parse_args()
 
+    sys.path.insert(0, os.path.join(args.makefw_home, "bin"))
+    import apply_patches  # noqa: E402  (sys.path 設定後に import する)
+
     packages_dir = os.path.join(args.app_dir, "packages")
+    patches_dir = os.path.join(args.app_dir, "patches")
     candidates = find_candidates(packages_dir)
 
     if not candidates:
@@ -316,12 +359,30 @@ def main():
 
     ensure_gitignore(args.app_dir)
 
-    if not needs_extraction(zip_path, args.app_dir):
+    if not needs_extraction(zip_path, args.app_dir, selected, patches_dir, apply_patches):
         return 0
 
+    stamp_file = stamp_path(args.app_dir)
+    try:
+        os.remove(stamp_file)
+    except FileNotFoundError:
+        pass
+
     print(f"INFO: cJSON パッケージを展開しています: {selected}", file=sys.stderr)
-    ok = extract(zip_path, args.app_dir)
-    return 0 if ok else 2
+    if not extract(zip_path, args.app_dir):
+        return 2
+
+    try:
+        apply_patches.apply_series(Path(patches_dir), Path(args.app_dir))
+    except apply_patches.PatchError as exc:
+        print(f"ERROR: cJSON パッチの適用に失敗しました: {exc}", file=sys.stderr)
+        return 3
+
+    write_stamp(
+        stamp_file,
+        compute_stamp_fields(zip_path, selected, patches_dir, apply_patches),
+    )
+    return 0
 
 
 if __name__ == "__main__":

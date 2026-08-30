@@ -118,6 +118,25 @@ MOCK_CJSON_RET(char *, cJSON_SetValuestring, (cJSON * object, const char *values
 MOCK_CJSON_RET(void *, cJSON_malloc, (size_t size), (size), (_))
 MOCK_CJSON_VOID(void, cJSON_free, (void *object), (object), (_))
 
+/* cJSON_Integer.h */
+MOCK_CJSON_RET(cJSON_bool, cJSON_HasExactInteger, (const cJSON *item), (item), (_))
+MOCK_CJSON_RET(cJSON *, cJSON_CreateInt8, (int8_t value), (value), (_))
+MOCK_CJSON_RET(cJSON *, cJSON_CreateUInt8, (uint8_t value), (value), (_))
+MOCK_CJSON_RET(cJSON *, cJSON_CreateInt16, (int16_t value), (value), (_))
+MOCK_CJSON_RET(cJSON *, cJSON_CreateUInt16, (uint16_t value), (value), (_))
+MOCK_CJSON_RET(cJSON *, cJSON_CreateInt32, (int32_t value), (value), (_))
+MOCK_CJSON_RET(cJSON *, cJSON_CreateUInt32, (uint32_t value), (value), (_))
+MOCK_CJSON_RET(cJSON *, cJSON_CreateInt64, (int64_t value), (value), (_))
+MOCK_CJSON_RET(cJSON *, cJSON_CreateUInt64, (uint64_t value), (value), (_))
+MOCK_CJSON_RET(cJSON_bool, cJSON_GetInt8Value, (const cJSON *item, int8_t *value_out), (item, value_out), (_, _))
+MOCK_CJSON_RET(cJSON_bool, cJSON_GetUInt8Value, (const cJSON *item, uint8_t *value_out), (item, value_out), (_, _))
+MOCK_CJSON_RET(cJSON_bool, cJSON_GetInt16Value, (const cJSON *item, int16_t *value_out), (item, value_out), (_, _))
+MOCK_CJSON_RET(cJSON_bool, cJSON_GetUInt16Value, (const cJSON *item, uint16_t *value_out), (item, value_out), (_, _))
+MOCK_CJSON_RET(cJSON_bool, cJSON_GetInt32Value, (const cJSON *item, int32_t *value_out), (item, value_out), (_, _))
+MOCK_CJSON_RET(cJSON_bool, cJSON_GetUInt32Value, (const cJSON *item, uint32_t *value_out), (item, value_out), (_, _))
+MOCK_CJSON_RET(cJSON_bool, cJSON_GetInt64Value, (const cJSON *item, int64_t *value_out), (item, value_out), (_, _))
+MOCK_CJSON_RET(cJSON_bool, cJSON_GetUInt64Value, (const cJSON *item, uint64_t *value_out), (item, value_out), (_, _))
+
 /* cJSON_Utils.h */
 MOCK_CJSON_RET(cJSON *, cJSONUtils_GetPointer, (cJSON *const object, const char *pointer), (object, pointer), (_, _))
 MOCK_CJSON_RET(cJSON *, cJSONUtils_GetPointerCaseSensitive, (cJSON *const object, const char *pointer),

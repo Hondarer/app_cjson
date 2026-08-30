@@ -16,8 +16,12 @@
 # のは標準出力のみであり、$(shell) が改行をスペースへ潰すのも標準出力側の
 # 挙動のため、複数行メッセージを崩さずに表示できる)。ここでは終了コードの
 # みを標準出力経由で受け取る。
+#
+# --makefw-home は、展開済み cJSON へ unified diff (patches/) を適用する
+# framework/makefw/bin/apply_patches.py を extract_package.py が import
+# するために必要。
 ifndef MAKEFW_SYNC_EVAL
-    _CJSON_EXTRACT_STATUS := $(shell python3 "$(MYAPP_DIR)/bin/extract_package.py" --app-dir "$(MYAPP_DIR)" >&2; echo $$?)
+    _CJSON_EXTRACT_STATUS := $(shell python3 "$(MYAPP_DIR)/bin/extract_package.py" --app-dir "$(MYAPP_DIR)" --makefw-home "$(MAKEFW_HOME)" >&2; echo $$?)
     ifneq ($(_CJSON_EXTRACT_STATUS),0)
         $(error cJSON パッケージの準備に失敗しました。上記のメッセージに従って app/cjson/packages にアーカイブを配置してください)
     endif

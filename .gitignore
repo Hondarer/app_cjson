@@ -46,6 +46,9 @@ make_doxy.stamp
 ## leaf テスト ディレクトリ単位の再テスト スキップ用スタンプ
 test.stamp
 
+## cJSON パッケージの展開/パッチ適用スキップ用スタンプ (bin/extract_package.py が生成)
+make_extract.stamp
+
 ## 中間ファイル (Coverity)
 idir
 

@@ -2,6 +2,7 @@
 #define MOCK_CJSON_H
 
 #include <cJSON.h>
+#include <cJSON_Integer.h>
 #include <cJSON_Utils.h>
 #include <testfw.h>
 
