@@ -69,7 +69,7 @@ cJSON は MIT License です。ライセンス条文の正本は `packages/cJSON
 - `prod/src/cmd/cjson_sample/` : cJSON の最小利用例
 - `test/src/cmd/cjsonTest/` : 動作テスト
 - `test/src/libcjsonTest/mockCjsonTest/` : cJSON API モックの動作テスト
-- `test/src/libcjsonTest/exportTest/` : 公開関数のモック対象漏れを検出するテスト
+- `test/src/libcjsonTest/exportTest/` : API 表、IDENT manifest、実ライブラリの全エクスポートが一致することを検出するテスト
 
 ## テスト用モック
 

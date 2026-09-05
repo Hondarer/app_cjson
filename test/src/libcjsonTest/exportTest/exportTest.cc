@@ -26,31 +26,27 @@ static const char *const kExpectedExportNames[] = {
 #undef MOCK_CJSON_RET
 };
 
-// libcjson の公開関数と mock_cjson の API 表が一致することの確認
+// libcjson の期待シンボルと実ライブラリの全エクスポートが一致することの確認
 TEST(exportTest, cjson_symbols_match_api_table)
 {
     // Arrange
     std::set<std::string> expected(
         std::begin(kExpectedExportNames),
         std::end(kExpectedExportNames)); // [状態] - mock_cjson の API 表から期待する公開関数名を構築する。
+#if defined(PLATFORM_WINDOWS)
+    expected.insert(testing::identManifestSymbolName(
+        "libcjson" TESTFW_SHARED_LIBRARY_EXTENSION)); // [状態] - IDENT manifest シンボル名を期待値へ追加する。
+#endif                                                /* PLATFORM_WINDOWS */
     std::string path = findWorkspaceRoot() + "/app/cjson/prod/lib/libcjson" +
                        TESTFW_SHARED_LIBRARY_EXTENSION; // [状態] - 検査対象を libcjson の動的ライブラリとする。
 
     // Pre-Assert
 
     // Act
-    std::set<std::string> all_actual =
+    std::set<std::string> actual =
         testing::getActualExportNames(path); // [手順] - libcjson のエクスポート名を取得する。
-    std::set<std::string> actual;
-    for (const std::string &name : all_actual)
-    {
-        if (name.rfind("cJSON", 0u) == 0u)
-        {
-            actual.insert(name);
-        }
-    }
 
     // Assert
-    EXPECT_EQ(expected, actual);    // [確認_正常系] - libcjson の全公開関数名が mock_cjson の API 表と一致すること。
-    EXPECT_EQ(109u, actual.size()); // [確認_正常系] - libcjson の公開関数数が 109 であること。
+    testing::expectExportNamesMatch(expected,
+                                    actual); // [確認_正常系] - libcjson のエクスポートに不足や想定外がないこと。
 }
