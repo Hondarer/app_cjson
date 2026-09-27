@@ -15,12 +15,31 @@ cJSON のリリース アーカイブからソースを展開して利用しま�
 
 cJSON を利用するプログラムの単体テスト向けに、Google Mock 対応の cJSON API モックも含みます。
 
+JSONC のコメントと末尾カンマを扱う拡張 API を `cJSON_JSONC.h` で提供します。
+
 ビルド成果物は動的ライブラリのみです。
 
 - Linux: `libcjson.so`
 - Windows: `libcjson.dll` およびリンク用の import library `libcjson.lib`
 
 静的ライブラリ (`libcjson.a` および静的リンク用の `libcjson.lib`) は生成しません。
+
+## JSONC の解析
+
+`cJSON_ParseJSONCWithLength()` は、行コメント、ブロック コメント、オブジェクトと配列の末尾カンマを含む文字列を解析します。  
+長さには終端 NUL を含まないバイト数を指定します。入力は変更せず、成功時の戻り値は `cJSON_Delete()` で解放します。構文エラーやメモリ不足の場合は `NULL` を返します。
+
+```c
+#include <cJSON_JSONC.h>
+#include <string.h>
+
+const char *source = "{\"ports\": [5001,], // first service\n}";
+cJSON *root = cJSON_ParseJSONCWithLength(source, strlen(source));
+/* root を使用する */
+cJSON_Delete(root);
+```
+
+通常の `cJSON_Parse()` は JSONC に変更せず、従来どおり JSON を解析します。
 
 ## パッケージの配置手順 (初回セットアップ)
 
@@ -74,7 +93,7 @@ cJSON は MIT License です。ライセンス条文の正本は `packages/cJSON
 ## テスト用モック
 
 `test/lib/libmock_cjson.a` は、cJSON を利用する app の単体テストで使用する Google Mock 対応ライブラリです。  
-`cJSON.h` と `cJSON_Utils.h` の公開関数を対象とし、`Mock_cjson` を生成しない場合と、生成後に個別の動作を指定しない場合は、`libcjson` の実関数を呼び出します。
+`cJSON.h`、`cJSON_Utils.h`、`cJSON_Integer.h`、`cJSON_JSONC.h` の公開関数を対象とし、`Mock_cjson` を生成しない場合と、生成後に個別の動作を指定しない場合は、`libcjson` の実関数を呼び出します。
 
 テスト コードでは `mock_cjson.h` をインクルードし、テスト対象の `makepart.mk` では `cjson` の代わりに `mock_cjson` をリンクします。  
 `cjson` と `mock_cjson` を同時にリンクしないでください。Linux では実ライブラリの強シンボルが弱定義のモックを上書きし、`EXPECT_CALL` が効かなくなります。

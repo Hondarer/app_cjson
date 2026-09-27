@@ -2,6 +2,7 @@
 
 #include <cJSON.h>
 #include <cJSON_Integer.h>
+#include <cJSON_JSONC.h>
 #include <cJSON_Utils.h>
 
 #include <set>

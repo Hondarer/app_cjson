@@ -1,5 +1,6 @@
 #include <testfw.h>
 #include <mock_cjson.h>
+#include <cstring>
 
 // Mock_cjson を注入しない呼び出しが cJSON と cJSON_Utils の実関数へ委譲されることの確認
 TEST(mockCjsonTest, delegates_to_real_without_mock)
@@ -91,4 +92,45 @@ TEST(mockCjsonTest, isolates_parse_and_string_value_without_real_object)
     // Assert
     EXPECT_EQ(&item, actual);    // [確認_正常系] - cJSON_Parse の戻り値が item のアドレスであること。
     EXPECT_STREQ("name", value); // [確認_正常系] - cJSON_GetStringValue の戻り値が name であること。
+}
+
+// JSONC 拡張の実委譲がコメントと末尾カンマを解析し、文字列を保持することの確認
+TEST(mockCjsonTest, delegates_jsonc_parser)
+{
+    const char *source = "/* header */ {\"name\":\"a,}\",\"items\":[1, /"
+                         "/ item\n],}";
+
+    cJSON *root = cJSON_ParseJSONCWithLength(source, std::strlen(source)); // [手順] - JSONC を実関数で解析する。
+
+    ASSERT_NE(nullptr, root); // [確認_正常系] - 末尾カンマを含む JSONC が解析できること。
+    EXPECT_STREQ("a,}", cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(root, "name")));
+    EXPECT_EQ(1, cJSON_GetArraySize(cJSON_GetObjectItemCaseSensitive(root, "items")));
+    cJSON_Delete(root);
+}
+
+// JSONC 拡張の不正なカンマと閉じていないコメントが拒否されることの確認
+TEST(mockCjsonTest, rejects_invalid_jsonc)
+{
+    const char *empty_member = "{,}";
+    const char *missing_value = "{\"value\":,}";
+    const char *unclosed_comment = "{/" "* comment";
+
+    EXPECT_EQ(nullptr, cJSON_ParseJSONCWithLength(empty_member, std::strlen(empty_member)));
+    EXPECT_EQ(nullptr, cJSON_ParseJSONCWithLength(missing_value, std::strlen(missing_value)));
+    EXPECT_EQ(nullptr, cJSON_ParseJSONCWithLength(unclosed_comment, std::strlen(unclosed_comment)));
+    EXPECT_EQ(nullptr, cJSON_ParseJSONCWithLength(nullptr, 0U));
+}
+
+// JSONC 拡張の呼び出し結果を mock で差し替えられることの確認
+TEST(mockCjsonTest, overrides_jsonc_parser)
+{
+    NiceMock<Mock_cjson> mock_cjson;
+    cJSON expected = {};
+    const char *source = "{}";
+    EXPECT_CALL(mock_cjson, cJSON_ParseJSONCWithLength(StrEq(source), std::strlen(source)))
+        .WillOnce(Return(&expected));
+
+    cJSON *actual = cJSON_ParseJSONCWithLength(source, std::strlen(source)); // [手順] - mock を介して JSONC を解析する。
+
+    EXPECT_EQ(&expected, actual); // [確認_正常系] - JSONC 解析結果を差し替えられること。
 }

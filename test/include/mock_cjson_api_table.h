@@ -24,6 +24,9 @@ MOCK_CJSON_RET(cJSON *, cJSON_ParseWithLengthOpts,
                (const char *value, size_t buffer_length, const char **return_parse_end,
                 cJSON_bool require_null_terminated),
                (value, buffer_length, return_parse_end, require_null_terminated), (_, _, _, _))
+/* cJSON_JSONC.h */
+MOCK_CJSON_RET(cJSON *, cJSON_ParseJSONCWithLength, (const char *value, size_t buffer_length),
+               (value, buffer_length), (_, _))
 MOCK_CJSON_RET(char *, cJSON_Print, (const cJSON *item), (item), (_))
 MOCK_CJSON_RET(char *, cJSON_PrintUnformatted, (const cJSON *item), (item), (_))
 MOCK_CJSON_RET(char *, cJSON_PrintBuffered, (const cJSON *item, int prebuffer, cJSON_bool fmt), (item, prebuffer, fmt),
