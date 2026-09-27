@@ -137,10 +137,10 @@ TEST_F(cjsonIntegerTest, get_value_checks_range_boundaries)
     EXPECT_TRUE(okInRange);  // [確認_正常系] - 境界値の取得が成功すること。
     EXPECT_EQ(127, value);   // [確認_正常系] - 取得した値が 127 であること。
 
-    // Act
+    // Act_2
     cJSON_bool okOutOfRange = cJSON_GetInt8Value(outOfRange, &value); // [手順] - 範囲外の値を int8_t として取得する。
 
-    // Assert
+    // Assert_2
     EXPECT_FALSE(okOutOfRange); // [確認_異常系] - 範囲外の取得が失敗すること。
     EXPECT_EQ(127, value);      // [確認_異常系] - 失敗時に格納先が変更されないこと。
 
@@ -264,8 +264,6 @@ TEST_F(cjsonIntegerTest, compare_distinguishes_values_beyond_double_precision)
     cJSON_Delete(right);
 }
 
-// フィールドを直接書き換えた項目が従来の double 経路へ落ちることの確認
-//
 // cJSON.h の cJSON_SetIntValue は valueint と valuedouble を直接書き換えるマクロであり、
 // 関数側から検知できない。ここではそのマクロが行うのと同じ直接代入を行い、
 // 整合性ガードが働くことを確認する。
@@ -273,6 +271,8 @@ TEST_F(cjsonIntegerTest, compare_distinguishes_values_beyond_double_precision)
 // -Wfloat-conversion が出る。抑止は OS ごとの書き分けが要るうえ、検証したいのは
 // 「フィールドを直接書き換えた項目の扱い」であってマクロの展開形ではないため、
 // 同等の代入を直接書く。
+
+// フィールドを直接書き換えた項目が従来の double 経路へ落ちることの確認
 TEST_F(cjsonIntegerTest, direct_field_write_falls_back_to_double_path)
 {
     // Arrange
