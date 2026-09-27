@@ -55,9 +55,9 @@ extern "C" {
  *  整数と `valuedouble` が食い違う項目を、正確な整数として扱わないためです。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への書き込みと同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 CJSON_PUBLIC(cJSON_bool) cJSON_HasExactInteger(const cJSON *item);
 
@@ -69,8 +69,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_HasExactInteger(const cJSON *item);
  *  生成した項目は @ref cJSON_Delete で解放してください。
  *
  *  @par            スレッド セーフ
- *  スレッド セーフです。\n
- *  内部に共有状態を持たず、呼び出しごとに独立した項目を生成します。
+ *  本関数はスレッド セーフです。
  */
 CJSON_PUBLIC(cJSON *) cJSON_CreateInt8(int8_t value);
 
@@ -82,8 +81,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateInt8(int8_t value);
  *  生成した項目は @ref cJSON_Delete で解放してください。
  *
  *  @par            スレッド セーフ
- *  スレッド セーフです。\n
- *  内部に共有状態を持たず、呼び出しごとに独立した項目を生成します。
+ *  本関数はスレッド セーフです。
  */
 CJSON_PUBLIC(cJSON *) cJSON_CreateUInt8(uint8_t value);
 
@@ -95,8 +93,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateUInt8(uint8_t value);
  *  生成した項目は @ref cJSON_Delete で解放してください。
  *
  *  @par            スレッド セーフ
- *  スレッド セーフです。\n
- *  内部に共有状態を持たず、呼び出しごとに独立した項目を生成します。
+ *  本関数はスレッド セーフです。
  */
 CJSON_PUBLIC(cJSON *) cJSON_CreateInt16(int16_t value);
 
@@ -108,8 +105,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateInt16(int16_t value);
  *  生成した項目は @ref cJSON_Delete で解放してください。
  *
  *  @par            スレッド セーフ
- *  スレッド セーフです。\n
- *  内部に共有状態を持たず、呼び出しごとに独立した項目を生成します。
+ *  本関数はスレッド セーフです。
  */
 CJSON_PUBLIC(cJSON *) cJSON_CreateUInt16(uint16_t value);
 
@@ -121,8 +117,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateUInt16(uint16_t value);
  *  生成した項目は @ref cJSON_Delete で解放してください。
  *
  *  @par            スレッド セーフ
- *  スレッド セーフです。\n
- *  内部に共有状態を持たず、呼び出しごとに独立した項目を生成します。
+ *  本関数はスレッド セーフです。
  */
 CJSON_PUBLIC(cJSON *) cJSON_CreateInt32(int32_t value);
 
@@ -134,8 +129,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateInt32(int32_t value);
  *  生成した項目は @ref cJSON_Delete で解放してください。
  *
  *  @par            スレッド セーフ
- *  スレッド セーフです。\n
- *  内部に共有状態を持たず、呼び出しごとに独立した項目を生成します。
+ *  本関数はスレッド セーフです。
  */
 CJSON_PUBLIC(cJSON *) cJSON_CreateUInt32(uint32_t value);
 
@@ -147,8 +141,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateUInt32(uint32_t value);
  *  生成した項目は @ref cJSON_Delete で解放してください。
  *
  *  @par            スレッド セーフ
- *  スレッド セーフです。\n
- *  内部に共有状態を持たず、呼び出しごとに独立した項目を生成します。
+ *  本関数はスレッド セーフです。
  */
 CJSON_PUBLIC(cJSON *) cJSON_CreateInt64(int64_t value);
 
@@ -160,8 +153,7 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateInt64(int64_t value);
  *  生成した項目は @ref cJSON_Delete で解放してください。
  *
  *  @par            スレッド セーフ
- *  スレッド セーフです。\n
- *  内部に共有状態を持たず、呼び出しごとに独立した項目を生成します。
+ *  本関数はスレッド セーフです。
  */
 CJSON_PUBLIC(cJSON *) cJSON_CreateUInt64(uint64_t value);
 
@@ -180,9 +172,9 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateUInt64(uint64_t value);
  *  収まれば取得できます。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への書き込みと同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 CJSON_PUBLIC(cJSON_bool) cJSON_GetInt8Value(const cJSON *item, int8_t *value_out);
 
@@ -201,9 +193,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt8Value(const cJSON *item, int8_t *value_out
  *  収まれば取得できます。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への書き込みと同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt8Value(const cJSON *item, uint8_t *value_out);
 
@@ -222,9 +214,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt8Value(const cJSON *item, uint8_t *value_o
  *  収まれば取得できます。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への書き込みと同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 CJSON_PUBLIC(cJSON_bool) cJSON_GetInt16Value(const cJSON *item, int16_t *value_out);
 
@@ -243,9 +235,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt16Value(const cJSON *item, int16_t *value_o
  *  収まれば取得できます。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への書き込みと同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt16Value(const cJSON *item, uint16_t *value_out);
 
@@ -264,9 +256,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt16Value(const cJSON *item, uint16_t *value
  *  収まれば取得できます。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への書き込みと同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 CJSON_PUBLIC(cJSON_bool) cJSON_GetInt32Value(const cJSON *item, int32_t *value_out);
 
@@ -285,9 +277,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt32Value(const cJSON *item, int32_t *value_o
  *  収まれば取得できます。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への書き込みと同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt32Value(const cJSON *item, uint32_t *value_out);
 
@@ -306,9 +298,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt32Value(const cJSON *item, uint32_t *value
  *  収まれば取得できます。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への書き込みと同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 CJSON_PUBLIC(cJSON_bool) cJSON_GetInt64Value(const cJSON *item, int64_t *value_out);
 
@@ -327,9 +319,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt64Value(const cJSON *item, int64_t *value_o
  *  収まれば取得できます。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への書き込みと同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt64Value(const cJSON *item, uint64_t *value_out);
 

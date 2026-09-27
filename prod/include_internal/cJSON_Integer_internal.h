@@ -52,9 +52,9 @@ extern "C" {
  *  既存の `valuestring` があれば解放します。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への他の操作と同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, size_t length);
 
@@ -73,9 +73,9 @@ cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, siz
  *  項目では一致しなくなり、従来の double 経路へ落ちます。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への書き込みと同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 const char *cjson_internal_integer_text(const cJSON *item);
 
@@ -88,9 +88,9 @@ const char *cjson_internal_integer_text(const cJSON *item);
  *  解放しません。
  *
  *  @par            スレッド セーフ
- *  条件付きスレッド セーフです。\n
- *  異なる項目への同時呼び出しはできます。\n
- *  同一項目への他の操作と同時に呼んではなりません。
+ *  本関数は条件付きスレッド セーフです。\n
+ *  異なる @p item に対する操作は同時に実行できます。\n
+ *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
 void cjson_internal_integer_clear(cJSON *item);
 

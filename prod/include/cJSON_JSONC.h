@@ -27,8 +27,9 @@ extern "C"
      *  入力文字列は変更しません。戻り値は @ref cJSON_Delete で解放してください。
      *
      *  @par            スレッド セーフ
-     *  条件付きスレッド セーフです。cJSON のアロケーター フックを並行して
-     *  変更せず、入力文字列を並行して変更しない場合に利用できます。
+     *  本関数は条件付きスレッド セーフです。\n
+     *  cJSON のアロケーター フックおよび入力文字列を同時に変更しない場合は、同時に実行できます。\n
+     *  他スレッドがそれらを同時に変更する場合は、呼び出し側で同期してください。
      */
     CJSON_PUBLIC(cJSON *) cJSON_ParseJSONCWithLength(const char *value, size_t buffer_length);
 
