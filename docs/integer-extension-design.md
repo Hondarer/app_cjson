@@ -36,7 +36,7 @@ cJSON 本体は `packages/` の配布アーカイブから機械的に展開す�
 
 採用できません。  
 `app/c-platform/appdeps.mk` がすでに `APP_DEPS := cjson` を宣言しており (cplat の `sym_loader` が JSON 設定の解析に cJSON を使用)、`app/cjson` から cplat の hashtable へ依存すると循環します。  
-`framework/makefw/bin/resolve_app_deps.sh` は循環依存を検出してビルドを停止します。
+`framework/makefw/bin_internal/resolve_app_deps.sh` は循環依存を検出してビルドを停止します。
 
 自前のテーブルを持つ案も、解放済みアドレスの再利用による誤対応と、全参照でのロックという設計負債を抱えます。
 
@@ -142,11 +142,11 @@ JSON の線上に整数の幅は残らないためです。
 
 | 段階 | 内容 | 状態 |
 |---|---|---|
-| 1 | `framework/makefw/bin/apply_patches.py` (共有パッチ適用器) | 完了 |
+| 1 | `framework/makefw/bin_internal/apply_patches.py` (共有パッチ適用器) | 完了 |
 | 2 | 公開ヘッダーと内部ヘッダーの確定 | 完了 |
 | 3 | `patches/0001` と `patches/0002` の作成 | 完了 |
 | 4 | `prod/libsrc/cjson/integer/` の実装とビルド配線 | 完了 |
-| 5 | `bin/extract_package.py` のパッチ方式への移行 | 完了 |
+| 5 | `bin_internal/extract_package.py` のパッチ方式への移行 | 完了 |
 | 6 | ビルド署名へ `patches/` と `packages/` を含める修正 (makefw) | 完了 |
 | 7 | 往復テスト `test/src/cmd/cjsonIntegerTest/` の追加 | 完了 |
 | 8 | `app/struct-meta` を新 API へ移行し 10^15 の上限を撤廃 | 完了 |
@@ -155,11 +155,11 @@ JSON の線上に整数の幅は残らないためです。
 
 段階 9 では、移行前の変換規則をアーカイブ原本へ適用した結果と移行後の展開結果がバイト一致することを、3 app すべてで確認しています。
 
-段階 10 では `app/general/docs/coding-guideline.md` の除外パターンを、展開された OSS 本体のパスだけを除く形へ狭めました。
-これにより 3 app の `test/` 配下と `app/cjson/prod/libsrc/cjson/integer/` の手書きコードが規範検査の対象に入ります。
-あわせて、mock の API 表に使う X マクロを関数形式マクロの用途ホワイト リストへ追加しました。
+段階 10 では `app/general/docs/coding-guideline.md` の除外パターンを、展開された OSS 本体のパスだけを除く形へ狭めました。  
+これにより 3 app の `test/` 配下と `app/cjson/prod/libsrc/cjson/integer/` の手書きコードが規範検査の対象に入ります。  
+あわせて、mock の API 表に使う X マクロを関数形式マクロの用途ホワイト リストへ追加しました。  
 [共有ライブラリの mock 化](../../general/docs/shared-library-mock-guideline.md) が定める正規の方式でありながら、ホワイト リストに載っていなかったためです。
 
 段階 6 は、実装中に見つかった既存の欠陥への対処です。  
-`framework/makefw/bin/resolve_app_deps.sh` が計算するビルド署名に `patches/` と `packages/` が含まれておらず、パッチや配布アーカイブを変更しても `make clean` を挟まない限り再展開が走りませんでした。  
+`framework/makefw/bin_internal/resolve_app_deps.sh` が計算するビルド署名に `patches/` と `packages/` が含まれておらず、パッチや配布アーカイブを変更しても `make clean` を挟まない限り再展開が走りませんでした。  
 パッチ方式では日常的な編集がこの欠陥を踏むため、根因を修正します。

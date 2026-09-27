@@ -34,13 +34,13 @@ cJSON を利用するプログラムの単体テスト向けに、Google Mock �
     https://github.com/DaveGamble/cJSON/archive/refs/tags/v1.7.18.zip
   ```
 
-配置後、`make` (または `make test`) を実行すると、 `app/cjson/bin/extract_package.py` が自動的に `prod/include/`, `prod/libsrc/cjson/` へ展開します。  
+配置後、`make` (または `make test`) を実行すると、 `app/cjson/bin_internal/extract_package.py` が自動的に `prod/include/`, `prod/libsrc/cjson/` へ展開します。  
 展開する `cJSON.h` には警告抑制 pragma を追加しません。  
 利用側の警告分離は `appdeps.mk` の提供側定義を通じて makefw が行います。  
 展開先はいずれも生成物であり `.gitignore` 対象です。
 
 展開に続けて、`app/cjson/patches/` の unified diff を自動的に適用します。  
-適用器は `framework/makefw/bin/apply_patches.py` (app 間で共有する適用器) です。  
+適用器は `framework/makefw/bin_internal/apply_patches.py` (app 間で共有する適用器) です。  
 cJSON 本体への変更はすべてこのパッチ経由で行い、展開直後のファイルを直接編集することはありません。  
 パッチの一覧と個々の目的は [patches/README.md](patches/README.md) を参照してください。
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""app/cjson/bin/extract_package.py
+"""app/cjson/bin_internal/extract_package.py
 
 packages/ 配下の cJSON アーカイブ (zip) を prod/include/cjson,
 prod/libsrc/cjson へ展開する。外部ツール (unzip 等) に依存せず、
 標準ライブラリ zipfile のみを使用する。
 
-展開後、patches/ 配下の unified diff (framework/makefw/bin/apply_patches.py)
+展開後、patches/ 配下の unified diff (framework/makefw/bin_internal/apply_patches.py)
 を順に適用する。zip の内容は加工せずそのまま書き出し、cJSON 本体への
 改変はすべてパッチ側で行う。
 """
@@ -335,12 +335,12 @@ def main():
     parser.add_argument(
         "--makefw-home",
         required=True,
-        help="framework/makefw のパス。<makefw-home>/bin を sys.path へ加えて "
+        help="framework/makefw のパス。<makefw-home>/bin_internal を sys.path へ加えて "
         "apply_patches を import するために使う。",
     )
     args = parser.parse_args()
 
-    sys.path.insert(0, os.path.join(args.makefw_home, "bin"))
+    sys.path.insert(0, os.path.join(args.makefw_home, "bin_internal"))
     import apply_patches  # noqa: E402  (sys.path 設定後に import する)
 
     packages_dir = os.path.join(args.app_dir, "packages")
