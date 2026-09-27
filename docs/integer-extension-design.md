@@ -54,6 +54,8 @@ cJSON 本体は `packages/` の配布アーカイブから機械的に展開す�
 | `cJSON_Utils.c` の `overwrite_item()` | 差し替え後も古い整数値が残り、表示上の値と食い違います。 |
 | `cJSON_Utils.c` の `apply_patch()` | 上流自身が、`cJSON_New_Item()` を経ずに定義した静的記憶域の `cJSON` を値渡ししています。 |
 
+Table: 上流 cJSON の浅いコピー箇所と影響
+
 3 番目が決定的です。  
 `cJSON_Utils.c` の 843 行は `static const cJSON invalid = { ... };` と書いており、`cJSON_New_Item()` を経ない `cJSON` を値渡しで `overwrite_item()` へ渡します。  
 「API 経由で生成した項目しか渡されない」という前提が、利用側ではなく上流 cJSON 自身の中ですでに破られています。  
@@ -75,6 +77,8 @@ cJSON 本体は `packages/` の配布アーカイブから機械的に展開す�
 | `create_reference()` | ポインターを共有し `cJSON_IsReference` で二重解放を避けます。 |
 | `overwrite_item()` | 旧 `valuestring` を解放してから `memcpy` します。 |
 | `cJSON_SetValuestring()` | `cJSON_String` 以外を弾くため、数値の項目を書き換えません。 |
+
+Table: 上流 cJSON 処理における valuestring 再利用時の挙動
 
 解放、複製、参照、差し替えのいずれにもパッチが不要です。
 
@@ -107,6 +111,8 @@ cJSON 本体は `packages/` の配布アーカイブから機械的に展開す�
 | `print_number()` | 保持している表記があれば、それをそのまま出力する分岐を足します。 |
 | `cJSON_Compare()` | 双方が正確な整数を保持していれば正規形の一致で比較します。 |
 | `cJSON_SetNumberHelper()` | double での上書きなので保持している表記を破棄します。 |
+
+Table: cJSON 整数拡張パッチの変更箇所一覧
 
 トークンの妥当性は保存関数が `-?[0-9]+` として自前で検証します。  
 そのため `parse_number()` のトークン走査に指数の判定を足す必要がなく、上流の走査ロジックには一切触れません。
@@ -152,6 +158,8 @@ JSON の線上に整数の幅は残らないためです。
 | 8 | `app/struct-meta` を新 API へ移行し 10^15 の上限を撤廃 | 完了 |
 | 9 | `app/sqlite` と `app/lua` のパッチ方式への移行 | 完了 |
 | 10 | 規範の除外パターンの見直し | 完了 |
+
+Table: cJSON 整数拡張の実装進捗
 
 段階 9 では、移行前の変換規則をアーカイブ原本へ適用した結果と移行後の展開結果がバイト一致することを、3 app すべてで確認しています。
 
