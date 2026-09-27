@@ -35,7 +35,7 @@ cJSON 本体は `packages/` の配布アーカイブから機械的に展開す�
 `cJSON *` を鍵とする外部テーブルに整数を保持する案です。
 
 採用できません。  
-`app/c-platform/appdeps.mk` がすでに `APP_DEPS := cjson` を宣言しており (cplat の `sym_loader` が JSON 設定の解析に cJSON を使用)、`app/cjson` から cplat の hashtable へ依存すると循環します。  
+`app/cplat/appdeps.mk` がすでに `APP_DEPS := cjson` を宣言しており (cplat の `sym_loader` が JSON 設定の解析に cJSON を使用)、`app/cjson` から cplat の hashtable へ依存すると循環します。  
 `framework/makefw/bin_internal/resolve_app_deps.sh` は循環依存を検出してビルドを停止します。
 
 自前のテーブルを持つ案も、解放済みアドレスの再利用による誤対応と、全参照でのロックという設計負債を抱えます。
