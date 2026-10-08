@@ -1,6 +1,6 @@
 /**
  *******************************************************************************
- *  @file           src/cmd/cjson_sample/cjson_sample.c
+ *  @file           cjson_sample.c
  *  @brief          cJSON を使用して JSON オブジェクトを組み立て、文字列化するコマンドを実装します。
  *  @author         Tetsuo Honda
  *  @date           2026/07/26

@@ -99,6 +99,8 @@ TEST_F(cjsonIntegerTest, create_functions_emit_expected_text)
     // Pre-Assert
 
     // Act
+    // [手順] - 各生成関数で項目を作成し、printAndDelete で文字列化する。
+
     // Assert
     EXPECT_EQ(std::string("-128"), printAndDelete(cJSON_CreateInt8(INT8_MIN)));
     // [確認_正常系] - cJSON_CreateInt8(INT8_MIN) が -128 を出力すること。

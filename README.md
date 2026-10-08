@@ -74,7 +74,7 @@ cJSON 本体への変更はすべてこのパッチ経由で行い、展開直�
 ## バージョン更新手順
 
 1. 新しいバージョンの zip を取得し、`app/cjson/packages/` に追加します。
-2. 古いバージョンの zip を削除する (`packages/` には常に 1 個のみを置く運用)。
+2. 古いバージョンの zip を削除します (`packages/` には常に 1 個のみを配置する運用)。
 3. `make` を実行すると、新しい zip の内容またはパッチの内容が展開済み生成物と異なると判定され、自動的に再展開とパッチ再適用が行われます。
 
 ## ライセンス
@@ -90,7 +90,7 @@ cJSON は MIT License です。ライセンス条文の正本は `packages/cJSON
 - `test/src/libcjsonTest/mockCjsonTest/` : cJSON API モックの動作テスト
 - `test/src/libcjsonTest/exportTest/` : API 表、IDENT manifest、実ライブラリの全エクスポートが一致することを検出するテスト
 
-## テスト用モック
+## cJSON API モック
 
 `test/lib/libmock_cjson.a` は、cJSON を利用する app の単体テストで使用する Google Mock 対応ライブラリです。  
 `cJSON.h`、`cJSON_Utils.h`、`cJSON_Integer.h`、`cJSON_JSONC.h` の公開関数を対象とし、`Mock_cjson` を生成しない場合と、生成後に個別の動作を指定しない場合は、`libcjson` の実関数を呼び出します。

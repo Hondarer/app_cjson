@@ -2,6 +2,12 @@
  *******************************************************************************
  *  @file           cJSON_JSONC.c
  *  @brief          JSONC 文字列の解析を実装します。
+ *  @author         Tetsuo Honda
+ *  @date           2026/09/01
+ *  @version        1.0.0
+ *
+ *  @copyright      Copyright (C) Tetsuo Honda. 2026. All rights reserved.
+ *
  *******************************************************************************
  */
 
