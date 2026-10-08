@@ -104,7 +104,9 @@ TEST(mockCjsonTest, delegates_jsonc_parser)
 
     ASSERT_NE(nullptr, root); // [確認_正常系] - 末尾カンマを含む JSONC が解析できること。
     EXPECT_STREQ("a,}", cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(root, "name")));
+    // [確認_正常系] - `cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(root, "name"))` の戻り値が `"a,}"` であること。
     EXPECT_EQ(1, cJSON_GetArraySize(cJSON_GetObjectItemCaseSensitive(root, "items")));
+    // [確認_正常系] - `cJSON_GetArraySize(cJSON_GetObjectItemCaseSensitive(root, "items"))` の戻り値が `1` であること。
     cJSON_Delete(root);
 }
 
@@ -116,9 +118,13 @@ TEST(mockCjsonTest, rejects_invalid_jsonc)
     const char *unclosed_comment = "{/" "* comment";
 
     EXPECT_EQ(nullptr, cJSON_ParseJSONCWithLength(empty_member, std::strlen(empty_member)));
+    // [確認_異常系] - `cJSON_ParseJSONCWithLength(empty_member, std::strlen(empty_member))` の戻り値が `nullptr` であること。
     EXPECT_EQ(nullptr, cJSON_ParseJSONCWithLength(missing_value, std::strlen(missing_value)));
+    // [確認_異常系] - `cJSON_ParseJSONCWithLength(missing_value, std::strlen(missing_value))` の戻り値が `nullptr` であること。
     EXPECT_EQ(nullptr, cJSON_ParseJSONCWithLength(unclosed_comment, std::strlen(unclosed_comment)));
+    // [確認_異常系] - `cJSON_ParseJSONCWithLength(unclosed_comment, std::strlen(unclosed_comment))` の戻り値が `nullptr` であること。
     EXPECT_EQ(nullptr, cJSON_ParseJSONCWithLength(nullptr, 0U));
+    // [確認_異常系] - `cJSON_ParseJSONCWithLength(nullptr, 0U)` の戻り値が `nullptr` であること。
 }
 
 // JSONC 拡張の呼び出し結果を mock で差し替えられることの確認
@@ -129,6 +135,7 @@ TEST(mockCjsonTest, overrides_jsonc_parser)
     const char *source = "{}";
     EXPECT_CALL(mock_cjson, cJSON_ParseJSONCWithLength(StrEq(source), std::strlen(source)))
         .WillOnce(Return(&expected));
+    // [Pre-Assert確認_正常系] - mock_cjson の cJSON_ParseJSONCWithLength(StrEq(source), std::strlen(source)) が登録した呼び出し期待を満たすこと。
 
     cJSON *actual = cJSON_ParseJSONCWithLength(source, std::strlen(source)); // [手順] - mock を介して JSONC を解析する。
 
