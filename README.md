@@ -7,8 +7,7 @@ c-modernization-kit のワークスペース内 (`framework/makefw` 等と組み
 
 ## 概要
 
-[cJSON](https://github.com/DaveGamble/cJSON) (MIT License) のコア機能 (cJSON.c / cJSON.h) および拡張ユーティリティ (cJSON_Utils.c / cJSON_Utils.h)  
-を、c-modernization-kit の makefw 規約に沿って取り込んだラッパー ライブラリです。  
+[cJSON](https://github.com/DaveGamble/cJSON) (MIT License) のコア機能 (cJSON.c / cJSON.h) および拡張ユーティリティ (cJSON_Utils.c / cJSON_Utils.h) を、c-modernization-kit の makefw 規約に沿って取り込んだラッパー ライブラリです。  
 cJSON のリリース アーカイブからソースを展開して利用します。  
 `appdeps.mk` は cJSON の公開ヘッダーを外来ヘッダーとして定義します。  
 利用側では Linux の `-isystem` または MSVC の `/external:I` で警告を分離します。
