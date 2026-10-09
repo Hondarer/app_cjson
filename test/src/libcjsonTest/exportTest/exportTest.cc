@@ -48,6 +48,7 @@ TEST(exportTest, cjson_symbols_match_api_table)
         testing::getActualExportNames(path); // [手順] - libcjson のエクスポート名を取得する。
 
     // Assert
+    // [サブ手順参照 名前=testing.expectExportNamesMatch]
     testing::expectExportNamesMatch(expected,
-                                    actual); // [確認_正常系 回数=2] - libcjson のエクスポートに不足や想定外がないこと。
+                                    actual); // libcjson のエクスポートに不足や想定外がないこと。
 }
