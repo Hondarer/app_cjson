@@ -20,13 +20,18 @@ TEST_F(cjsonTest, parse_and_print_roundtrip)
     cJSON *root = cJSON_Parse(input); // [手順] - cJSON_Parse(input) で JSON 文字列をパースする。
 
     // Assert
-    ASSERT_NE(nullptr, root); // [確認_正常系] - cJSON_Parse の戻り値が NULL でないこと。
+    ASSERT_NE(nullptr, root); // [確認_正常系] - cJSON_Parse() の戻り値が nullptr 以外であること。
     cJSON *name = cJSON_GetObjectItemCaseSensitive(root, "name");
-    ASSERT_NE(nullptr, name);                          // [確認_正常系] - name フィールドが存在すること。
-    EXPECT_STREQ("cjson", cJSON_GetStringValue(name)); // [確認_正常系] - name フィールドの値が "cjson" であること。
+    ASSERT_NE(
+        nullptr,
+        name); // [確認_正常系] - "name" を取得した cJSON_GetObjectItemCaseSensitive() の戻り値が nullptr 以外であること。
+    EXPECT_STREQ("cjson",
+                 cJSON_GetStringValue(name)); // [確認_正常系] - cJSON_GetStringValue() の戻り値が "cjson" であること。
     cJSON *version = cJSON_GetObjectItemCaseSensitive(root, "version");
-    ASSERT_NE(nullptr, version);     // [確認_正常系] - version フィールドが存在すること。
-    EXPECT_EQ(1, version->valueint); // [確認_正常系] - version フィールドの値が 1 であること。
+    ASSERT_NE(
+        nullptr,
+        version); // [確認_正常系] - "version" を取得した cJSON_GetObjectItemCaseSensitive() の戻り値が nullptr 以外であること。
+    EXPECT_EQ(1, version->valueint); // [確認_正常系] - version->valueint が 1 であること。
 
     // Cleanup
     cJSON_Delete(root);
@@ -44,7 +49,7 @@ TEST_F(cjsonTest, parse_invalid_json_returns_null)
     cJSON *root = cJSON_Parse(input); // [手順] - cJSON_Parse(input) に不正な JSON 文字列を渡す。
 
     // Assert
-    EXPECT_EQ(nullptr, root); // [確認_異常系] - cJSON_Parse の戻り値が NULL であること。
+    EXPECT_EQ(nullptr, root); // [確認_異常系] - cJSON_Parse() の戻り値が nullptr であること。
 }
 
 // MergePatch が patch を適用することの確認
@@ -62,10 +67,12 @@ TEST_F(cjsonTest, utils_merge_patch_applies_patch)
         target, patch); // [手順] - cJSONUtils_MergePatch(target, patch) を呼び出す (RFC 7396 準拠のマージ)。
 
     // Assert
-    ASSERT_NE(nullptr, merged); // [確認_正常系] - cJSONUtils_MergePatch の戻り値が NULL でないこと。
+    ASSERT_NE(nullptr, merged); // [確認_正常系] - cJSONUtils_MergePatch() の戻り値が nullptr 以外であること。
     cJSON *version = cJSON_GetObjectItemCaseSensitive(merged, "version");
-    ASSERT_NE(nullptr, version);     // [確認_正常系] - マージ後の version フィールドが存在すること。
-    EXPECT_EQ(2, version->valueint); // [確認_正常系] - マージ後の version フィールドの値が 2 であること。
+    ASSERT_NE(
+        nullptr,
+        version); // [確認_正常系] - マージ後に "version" を取得した cJSON_GetObjectItemCaseSensitive() の戻り値が nullptr 以外であること。
+    EXPECT_EQ(2, version->valueint); // [確認_正常系] - version->valueint が 2 であること。
 
     // Cleanup
     cJSON_Delete(merged);
