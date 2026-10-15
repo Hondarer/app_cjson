@@ -27,7 +27,7 @@ class Mock_cjson
 #undef MOCK_CJSON_RET
 
     Mock_cjson();
-    ~Mock_cjson();
+    virtual ~Mock_cjson();
 };
 
 extern Mock_cjson *_mock_cjson;
