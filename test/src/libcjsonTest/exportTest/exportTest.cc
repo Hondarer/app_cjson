@@ -45,7 +45,7 @@ TEST(exportTest, cjson_symbols_match_api_table)
 
     // Act
     std::set<std::string> actual =
-        testing::getActualExportNames(path); // [手順] - libcjson のエクスポート名を取得する。
+        testing::getActualExportNames(path); // [手順] - path を指定して testing::getActualExportNames() を呼び出す。
 
     // Assert
     // [サブ手順参照 名前=testing.expectExportNamesMatch]

@@ -17,7 +17,7 @@ TEST_F(cjsonTest, parse_and_print_roundtrip)
     // Pre-Assert
 
     // Act
-    cJSON *root = cJSON_Parse(input); // [手順] - cJSON_Parse(input) で JSON 文字列をパースする。
+    cJSON *root = cJSON_Parse(input); // [手順] - JSON 文字列 input を指定して cJSON_Parse() を呼び出す。
 
     // Assert
     ASSERT_NE(nullptr, root); // [確認_正常系] - cJSON_Parse() の戻り値が nullptr 以外であること。
@@ -46,7 +46,7 @@ TEST_F(cjsonTest, parse_invalid_json_returns_null)
     // Pre-Assert
 
     // Act
-    cJSON *root = cJSON_Parse(input); // [手順] - cJSON_Parse(input) に不正な JSON 文字列を渡す。
+    cJSON *root = cJSON_Parse(input); // [手順] - 不正な JSON 文字列 input を指定して cJSON_Parse() を呼び出す。
 
     // Assert
     EXPECT_EQ(nullptr, root); // [確認_異常系] - cJSON_Parse() の戻り値が nullptr であること。
@@ -64,7 +64,8 @@ TEST_F(cjsonTest, utils_merge_patch_applies_patch)
 
     // Act
     cJSON *merged = cJSONUtils_MergePatch(
-        target, patch); // [手順] - cJSONUtils_MergePatch(target, patch) を呼び出す (RFC 7396 準拠のマージ)。
+        target,
+        patch); // [手順] - RFC 7396 準拠のマージとして、target と patch を指定して cJSONUtils_MergePatch() を呼び出す。
 
     // Assert
     ASSERT_NE(nullptr, merged); // [確認_正常系] - cJSONUtils_MergePatch() の戻り値が nullptr 以外であること。

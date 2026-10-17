@@ -54,7 +54,7 @@ TEST_F(cjsonIntegerTest, roundtrip_keeps_integers_beyond_double_precision)
     // Pre-Assert
 
     // Act
-    std::string output = parseAndPrint(input); // [手順] - パースした結果を cJSON_PrintUnformatted で出力する。
+    std::string output = parseAndPrint(input); // [手順] - JSON 文字列 input を指定して parseAndPrint() を呼び出す。
 
     // Assert
     EXPECT_EQ(std::string(input),
@@ -70,7 +70,7 @@ TEST_F(cjsonIntegerTest, fraction_and_exponent_keep_double_path)
     // Pre-Assert
 
     // Act
-    std::string output = parseAndPrint(input); // [手順] - パースした結果を出力する。
+    std::string output = parseAndPrint(input); // [手順] - JSON 文字列 input を指定して parseAndPrint() を呼び出す。
 
     // Assert
     EXPECT_EQ(std::string("[1.5,1000,-2.25]"), output);
@@ -86,7 +86,7 @@ TEST_F(cjsonIntegerTest, normalizes_leading_zero_and_negative_zero)
     // Pre-Assert
 
     // Act
-    std::string output = parseAndPrint(input); // [手順] - パースした結果を出力する。
+    std::string output = parseAndPrint(input); // [手順] - JSON 文字列 input を指定して parseAndPrint() を呼び出す。
 
     // Assert
     EXPECT_EQ(std::string("[7,0]"), output); // [確認_正常系] - parseAndPrint() の戻り値が "[7,0]" であること。
@@ -100,7 +100,7 @@ TEST_F(cjsonIntegerTest, create_functions_emit_expected_text)
     // Pre-Assert
 
     // Act
-    // [手順] - 各生成関数で項目を作成し、printAndDelete で文字列化する。
+    // [手順] - 各生成関数で作成した項目を指定して printAndDelete() を呼び出す。
 
     // Assert
     EXPECT_EQ(std::string("-128"), printAndDelete(cJSON_CreateInt8(INT8_MIN)));
@@ -136,14 +136,16 @@ TEST_F(cjsonIntegerTest, get_value_checks_range_boundaries)
     // Pre-Assert
 
     // Act
-    cJSON_bool okInRange = cJSON_GetInt8Value(inRange, &value); // [手順] - 収まる値を int8_t として取得する。
+    cJSON_bool okInRange = cJSON_GetInt8Value(
+        inRange, &value); // [手順] - 範囲に収まる項目 inRange を指定して cJSON_GetInt8Value() を呼び出す。
 
     // Assert
     EXPECT_TRUE(okInRange); // [確認_正常系] - 範囲内の値に対する cJSON_GetInt8Value() の戻り値が true であること。
     EXPECT_EQ(127, value);  // [確認_正常系] - value が 127 であること。
 
     // Act_2
-    cJSON_bool okOutOfRange = cJSON_GetInt8Value(outOfRange, &value); // [手順] - 範囲外の値を int8_t として取得する。
+    cJSON_bool okOutOfRange = cJSON_GetInt8Value(
+        outOfRange, &value); // [手順] - 範囲外の項目 outOfRange を指定して cJSON_GetInt8Value() を呼び出す。
 
     // Assert_2
     EXPECT_FALSE(okOutOfRange); // [確認_異常系] - 範囲外の値に対する cJSON_GetInt8Value() の戻り値が false であること。
@@ -167,8 +169,10 @@ TEST_F(cjsonIntegerTest, value_beyond_int64_requires_unsigned_getter)
     // Pre-Assert
 
     // Act
-    cJSON_bool okSigned = cJSON_GetInt64Value(item, &signedValue);       // [手順] - int64_t として取得を試みる。
-    cJSON_bool okUnsigned = cJSON_GetUInt64Value(item, &unsignedValue);  // [手順] - uint64_t として取得を試みる。
+    cJSON_bool okSigned = cJSON_GetInt64Value(
+        item, &signedValue); // [手順] - int64_t の取得先を指定して cJSON_GetInt64Value() を呼び出す。
+    cJSON_bool okUnsigned = cJSON_GetUInt64Value(
+        item, &unsignedValue); // [手順] - uint64_t の取得先を指定して cJSON_GetUInt64Value() を呼び出す。
 
     // Assert
     EXPECT_FALSE(okSigned);               // [確認_異常系] - cJSON_GetInt64Value() の戻り値が false であること。
@@ -183,7 +187,7 @@ TEST_F(cjsonIntegerTest, value_beyond_int64_requires_unsigned_getter)
 TEST_F(cjsonIntegerTest, get_value_works_for_plain_number)
 {
     // Arrange
-    cJSON *item = cJSON_CreateNumber(42); // [状態] - 従来の cJSON_CreateNumber で数値項目を用意する。
+    cJSON *item = cJSON_CreateNumber(42); // [状態] - 従来の cJSON_CreateNumber() で数値項目を用意する。
     int8_t value = 0;
 
     ASSERT_NE(nullptr, item);                  // [状態確認] - cJSON_CreateNumber() の戻り値が nullptr 以外であること。
@@ -192,7 +196,8 @@ TEST_F(cjsonIntegerTest, get_value_works_for_plain_number)
     // Pre-Assert
 
     // Act
-    cJSON_bool ok = cJSON_GetInt8Value(item, &value); // [手順] - int8_t として取得する。
+    cJSON_bool ok =
+        cJSON_GetInt8Value(item, &value); // [手順] - int8_t の取得先を指定して cJSON_GetInt8Value() を呼び出す。
 
     // Assert
     EXPECT_TRUE(ok);      // [確認_正常系] - cJSON_GetInt8Value() の戻り値が true であること。
@@ -213,7 +218,8 @@ TEST_F(cjsonIntegerTest, legacy_fields_keep_previous_behavior)
     // Pre-Assert
 
     // Act
-    cJSON *item = cJSON_GetObjectItemCaseSensitive(root, "v"); // [手順] - 値の項目を取得する。
+    cJSON *item = cJSON_GetObjectItemCaseSensitive(
+        root, "v"); // [手順] - "v" を指定して cJSON_GetObjectItemCaseSensitive() を呼び出す。
 
     // Assert
     ASSERT_NE(nullptr, item); // [確認_正常系] - cJSON_GetObjectItemCaseSensitive() の戻り値が nullptr 以外であること。
@@ -238,7 +244,7 @@ TEST_F(cjsonIntegerTest, duplicate_keeps_exact_integer)
     // Pre-Assert
 
     // Act
-    cJSON *copy = cJSON_Duplicate(root, 1); // [手順] - 再帰指定で複製する。
+    cJSON *copy = cJSON_Duplicate(root, 1); // [手順] - 再帰的な複製を指定して cJSON_Duplicate() を呼び出す。
 
     // Assert
     ASSERT_NE(nullptr, copy); // [確認_正常系] - cJSON_Duplicate() の戻り値が nullptr 以外であること。
@@ -267,7 +273,8 @@ TEST_F(cjsonIntegerTest, compare_distinguishes_values_beyond_double_precision)
     // Pre-Assert
 
     // Act
-    cJSON_bool equal = cJSON_Compare(left, right, 1); // [手順] - 大文字小文字を区別して比較する。
+    cJSON_bool equal =
+        cJSON_Compare(left, right, 1); // [手順] - 大文字小文字を区別する指定で cJSON_Compare() を呼び出す。
 
     // Assert
     EXPECT_FALSE(equal); // [確認_正常系] - cJSON_Compare() の戻り値が false であること。
@@ -322,7 +329,8 @@ TEST_F(cjsonIntegerTest, apply_patches_replaces_exact_integer)
     // Pre-Assert
 
     // Act
-    int status = cJSONUtils_ApplyPatches(object, patches); // [手順] - JSON Patch を適用する。
+    int status = cJSONUtils_ApplyPatches(
+        object, patches); // [手順] - JSON Patch を指定して cJSONUtils_ApplyPatches() を呼び出す。
 
     // Assert
     EXPECT_EQ(0, status); // [確認_正常系] - cJSONUtils_ApplyPatches() の戻り値が 0 であること。
