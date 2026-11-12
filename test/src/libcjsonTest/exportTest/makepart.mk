@@ -1,5 +1,5 @@
 # ライブラリ全体の公開シンボルを検査する黒箱テストのため、TEST_SRCS は指定しない。
-LIBS += cjson
+LIBS += cjson_app
 
 # テスト エビデンスと C++ の条件分岐へ同じプラットフォーム名を渡す。
 ifdef PLATFORM_LINUX

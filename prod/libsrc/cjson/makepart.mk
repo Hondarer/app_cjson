@@ -26,4 +26,6 @@ else ifdef PLATFORM_LINUX
 endif
 
 # 静的ライブラリは生成せず、Linux では .so、Windows では .dll を生成する。
+# 第三者管理ライブラリは、OS やほかの製品の同名ライブラリと区別するため、名前に接尾辞 _app を付ける。
+TARGET := cjson_app
 LIB_TYPE = shared

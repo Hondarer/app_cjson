@@ -27,7 +27,7 @@ static const char *const kExpectedExportNames[] = {
 #undef MOCK_CJSON_RET
 };
 
-// libcjson の期待シンボルと実ライブラリの全エクスポートが一致することの確認
+// libcjson_app の期待シンボルと実ライブラリの全エクスポートが一致することの確認
 TEST(exportTest, cjson_symbols_match_api_table)
 {
     // Arrange
@@ -36,10 +36,10 @@ TEST(exportTest, cjson_symbols_match_api_table)
         std::end(kExpectedExportNames)); // [状態] - mock_cjson の API 表から期待する公開関数名を構築する。
 #if defined(PLATFORM_WINDOWS)
     expected.insert(testing::identManifestSymbolName(
-        "libcjson" TESTFW_SHARED_LIBRARY_EXTENSION)); // [状態] - IDENT manifest シンボル名を期待値へ追加する。
+        "libcjson_app" TESTFW_SHARED_LIBRARY_EXTENSION)); // [状態] - IDENT manifest シンボル名を期待値へ追加する。
 #endif                                                /* PLATFORM_WINDOWS */
-    std::string path = findWorkspaceRoot() + "/app/cjson/prod/lib/libcjson" +
-                       TESTFW_SHARED_LIBRARY_EXTENSION; // [状態] - 検査対象を libcjson の動的ライブラリとする。
+    std::string path = findWorkspaceRoot() + "/app/cjson/prod/lib/libcjson_app" +
+                       TESTFW_SHARED_LIBRARY_EXTENSION; // [状態] - 検査対象を libcjson_app の動的ライブラリとする。
 
     // Pre-Assert
 
@@ -50,5 +50,5 @@ TEST(exportTest, cjson_symbols_match_api_table)
     // Assert
     // [サブ手順参照 名前=testing.expectExportNamesMatch]
     testing::expectExportNamesMatch(expected,
-                                    actual); // libcjson のエクスポートに不足や想定外がないこと。
+                                    actual); // libcjson_app のエクスポートに不足や想定外がないこと。
 }

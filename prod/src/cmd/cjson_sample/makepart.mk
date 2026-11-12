@@ -1,2 +1,2 @@
 # ライブラリの指定
-LIBS += cjson
+LIBS += cjson_app

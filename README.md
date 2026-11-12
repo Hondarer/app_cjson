@@ -18,10 +18,10 @@ JSONC のコメントと末尾カンマを扱う拡張 API を `cJSON_JSONC.h` �
 
 ビルド成果物は動的ライブラリのみです。
 
-- Linux: `libcjson.so`
-- Windows: `libcjson.dll` およびリンク用の import library `libcjson.lib`
+- Linux: `libcjson_app.so`
+- Windows: `libcjson_app.dll` およびリンク用の import library `libcjson_app.lib`
 
-静的ライブラリ (`libcjson.a` および静的リンク用の `libcjson.lib`) は生成しません。
+静的ライブラリは生成しません。
 
 ## JSONC の解析
 
@@ -80,7 +80,7 @@ cJSON 本体への変更はすべてこのパッチ経由で行い、展開直�
 
 cJSON は MIT License です。ライセンス条文の正本は `packages/cJSON-<version>.zip` 内の `LICENSE` です。  
 展開後は参考コピーとして `prod/libsrc/cjson/LICENSE.cjson` (生成物、.gitignore 対象) にも配置されます。  
-`libcjson.so` または `libcjson.dll` を利用したアプリケーションを配布する際は、MIT License に従い、著作権表示、MIT ライセンス本文、無保証・免責条項を含めてください。
+`libcjson_app.so` または `libcjson_app.dll` を利用したアプリケーションを配布する際は、MIT License に従い、著作権表示、MIT ライセンス本文、無保証・免責条項を含めてください。
 
 ## サンプルとテスト
 
@@ -92,10 +92,10 @@ cJSON は MIT License です。ライセンス条文の正本は `packages/cJSON
 ## cJSON API モック
 
 `test/lib/libmock_cjson.a` は、cJSON を利用する app の単体テストで使用する Google Mock 対応ライブラリです。  
-`cJSON.h`、`cJSON_Utils.h`、`cJSON_Integer.h`、`cJSON_JSONC.h` の公開関数を対象とし、`Mock_cjson` を生成しない場合と、生成後に個別の動作を指定しない場合は、`libcjson` の実関数を呼び出します。
+`cJSON.h`、`cJSON_Utils.h`、`cJSON_Integer.h`、`cJSON_JSONC.h` の公開関数を対象とし、`Mock_cjson` を生成しない場合と、生成後に個別の動作を指定しない場合は、`libcjson_app` の実関数を呼び出します。
 
-テスト コードでは `mock_cjson.h` をインクルードし、テスト対象の `makepart.mk` では `cjson` の代わりに `mock_cjson` をリンクします。  
-`cjson` と `mock_cjson` を同時にリンクしないでください。Linux では実ライブラリの強シンボルが弱定義のモックを上書きし、`EXPECT_CALL` が効かなくなります。
+テスト コードでは `mock_cjson.h` をインクルードし、テスト対象の `makepart.mk` では `cjson_app` の代わりに `mock_cjson` をリンクします。  
+`cjson_app` と `mock_cjson` を同時にリンクしないでください。Linux では実ライブラリの強シンボルが弱定義のモックを上書きし、`EXPECT_CALL` が効かなくなります。
 
 ```makefile
 ifdef PLATFORM_WINDOWS
@@ -106,7 +106,7 @@ LIBS += mock_cjson
 ```
 
 Windows では、`CJSON_HIDE_SYMBOLS` により cJSON の DLL import 宣言を無効にし、`mock_cjson` が提供する実シンボルを参照します。  
-実関数への委譲では、Linux の `LD_LIBRARY_PATH` または Windows の `PATH` から `libcjson` を読み込みます。
+実関数への委譲では、Linux の `LD_LIBRARY_PATH` または Windows の `PATH` から `libcjson_app` を読み込みます。
 
 振る舞いを変更するテストでは、`Mock_cjson` を生成して `EXPECT_CALL` または `ON_CALL` を指定します。
 

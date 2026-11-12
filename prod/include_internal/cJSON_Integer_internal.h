@@ -6,7 +6,7 @@
  *  @date           2026/08/30
  *  @version        1.0.0
  *
- *  公開 API は @ref cJSON_Integer.h です。本ヘッダーは libcjson の内部だけで
+ *  公開 API は @ref cJSON_Integer.h です。本ヘッダーは libcjson_app の内部だけで
  *  使用します。\n
  *  パッチを当てた `cJSON.c` と、手書きの `prod/libsrc/cjson/integer/` 配下の
  *  実装が、この宣言を共有します。

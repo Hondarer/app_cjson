@@ -7,7 +7,7 @@
 #include <cJSON_Utils.h>
 #include <testfw.h>
 
-inline constexpr char kLibCjsonName[] = "libcjson" TESTFW_SHARED_LIBRARY_EXTENSION;
+inline constexpr char kLibCjsonName[] = "libcjson_app" TESTFW_SHARED_LIBRARY_EXTENSION;
 
 #define MOCK_CJSON_RET(return_type, name, parameters, arguments, matchers) \
     extern return_type delegate_real_##name parameters;
