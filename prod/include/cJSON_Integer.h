@@ -41,10 +41,11 @@
 #include <cJSON.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/**
+    /**
  *  @brief          項目が正確な整数を保持しているかを調べます。
  *  @param[in]      item    対象。NULL を渡せます。
  *  @return         正確な整数を保持していれば真、そうでなければ偽。
@@ -59,9 +60,9 @@ extern "C" {
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-CJSON_PUBLIC(cJSON_bool) cJSON_HasExactInteger(const cJSON *item);
+    CJSON_PUBLIC(cJSON_bool) cJSON_HasExactInteger(const cJSON *item);
 
-/**
+    /**
  *  @brief          8 ビット符号付き整数の項目を生成します。
  *  @param[in]      value   保持する値。
  *  @return         生成した項目。確保に失敗した場合は NULL。
@@ -71,9 +72,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_HasExactInteger(const cJSON *item);
  *  @par            スレッド セーフ
  *  本関数はスレッド セーフです。
  */
-CJSON_PUBLIC(cJSON *) cJSON_CreateInt8(int8_t value);
+    CJSON_PUBLIC(cJSON *) cJSON_CreateInt8(int8_t value);
 
-/**
+    /**
  *  @brief          8 ビット符号なし整数の項目を生成します。
  *  @param[in]      value   保持する値。
  *  @return         生成した項目。確保に失敗した場合は NULL。
@@ -83,9 +84,9 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateInt8(int8_t value);
  *  @par            スレッド セーフ
  *  本関数はスレッド セーフです。
  */
-CJSON_PUBLIC(cJSON *) cJSON_CreateUInt8(uint8_t value);
+    CJSON_PUBLIC(cJSON *) cJSON_CreateUInt8(uint8_t value);
 
-/**
+    /**
  *  @brief          16 ビット符号付き整数の項目を生成します。
  *  @param[in]      value   保持する値。
  *  @return         生成した項目。確保に失敗した場合は NULL。
@@ -95,9 +96,9 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateUInt8(uint8_t value);
  *  @par            スレッド セーフ
  *  本関数はスレッド セーフです。
  */
-CJSON_PUBLIC(cJSON *) cJSON_CreateInt16(int16_t value);
+    CJSON_PUBLIC(cJSON *) cJSON_CreateInt16(int16_t value);
 
-/**
+    /**
  *  @brief          16 ビット符号なし整数の項目を生成します。
  *  @param[in]      value   保持する値。
  *  @return         生成した項目。確保に失敗した場合は NULL。
@@ -107,9 +108,9 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateInt16(int16_t value);
  *  @par            スレッド セーフ
  *  本関数はスレッド セーフです。
  */
-CJSON_PUBLIC(cJSON *) cJSON_CreateUInt16(uint16_t value);
+    CJSON_PUBLIC(cJSON *) cJSON_CreateUInt16(uint16_t value);
 
-/**
+    /**
  *  @brief          32 ビット符号付き整数の項目を生成します。
  *  @param[in]      value   保持する値。
  *  @return         生成した項目。確保に失敗した場合は NULL。
@@ -119,9 +120,9 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateUInt16(uint16_t value);
  *  @par            スレッド セーフ
  *  本関数はスレッド セーフです。
  */
-CJSON_PUBLIC(cJSON *) cJSON_CreateInt32(int32_t value);
+    CJSON_PUBLIC(cJSON *) cJSON_CreateInt32(int32_t value);
 
-/**
+    /**
  *  @brief          32 ビット符号なし整数の項目を生成します。
  *  @param[in]      value   保持する値。
  *  @return         生成した項目。確保に失敗した場合は NULL。
@@ -131,9 +132,9 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateInt32(int32_t value);
  *  @par            スレッド セーフ
  *  本関数はスレッド セーフです。
  */
-CJSON_PUBLIC(cJSON *) cJSON_CreateUInt32(uint32_t value);
+    CJSON_PUBLIC(cJSON *) cJSON_CreateUInt32(uint32_t value);
 
-/**
+    /**
  *  @brief          64 ビット符号付き整数の項目を生成します。
  *  @param[in]      value   保持する値。
  *  @return         生成した項目。確保に失敗した場合は NULL。
@@ -143,9 +144,9 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateUInt32(uint32_t value);
  *  @par            スレッド セーフ
  *  本関数はスレッド セーフです。
  */
-CJSON_PUBLIC(cJSON *) cJSON_CreateInt64(int64_t value);
+    CJSON_PUBLIC(cJSON *) cJSON_CreateInt64(int64_t value);
 
-/**
+    /**
  *  @brief          64 ビット符号なし整数の項目を生成します。
  *  @param[in]      value   保持する値。
  *  @return         生成した項目。確保に失敗した場合は NULL。
@@ -155,9 +156,9 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateInt64(int64_t value);
  *  @par            スレッド セーフ
  *  本関数はスレッド セーフです。
  */
-CJSON_PUBLIC(cJSON *) cJSON_CreateUInt64(uint64_t value);
+    CJSON_PUBLIC(cJSON *) cJSON_CreateUInt64(uint64_t value);
 
-/**
+    /**
  *  @brief          項目の値を 8 ビット符号付き整数として取得します。
  *  @param[in]      item        対象。NULL を渡せます。
  *  @param[out]     value_out   値の格納先。NULL を渡せます。
@@ -176,9 +177,9 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateUInt64(uint64_t value);
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-CJSON_PUBLIC(cJSON_bool) cJSON_GetInt8Value(const cJSON *item, int8_t *value_out);
+    CJSON_PUBLIC(cJSON_bool) cJSON_GetInt8Value(const cJSON *item, int8_t *value_out);
 
-/**
+    /**
  *  @brief          項目の値を 8 ビット符号なし整数として取得します。
  *  @param[in]      item        対象。NULL を渡せます。
  *  @param[out]     value_out   値の格納先。NULL を渡せます。
@@ -197,9 +198,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt8Value(const cJSON *item, int8_t *value_out
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt8Value(const cJSON *item, uint8_t *value_out);
+    CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt8Value(const cJSON *item, uint8_t *value_out);
 
-/**
+    /**
  *  @brief          項目の値を 16 ビット符号付き整数として取得します。
  *  @param[in]      item        対象。NULL を渡せます。
  *  @param[out]     value_out   値の格納先。NULL を渡せます。
@@ -218,9 +219,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt8Value(const cJSON *item, uint8_t *value_o
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-CJSON_PUBLIC(cJSON_bool) cJSON_GetInt16Value(const cJSON *item, int16_t *value_out);
+    CJSON_PUBLIC(cJSON_bool) cJSON_GetInt16Value(const cJSON *item, int16_t *value_out);
 
-/**
+    /**
  *  @brief          項目の値を 16 ビット符号なし整数として取得します。
  *  @param[in]      item        対象。NULL を渡せます。
  *  @param[out]     value_out   値の格納先。NULL を渡せます。
@@ -239,9 +240,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt16Value(const cJSON *item, int16_t *value_o
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt16Value(const cJSON *item, uint16_t *value_out);
+    CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt16Value(const cJSON *item, uint16_t *value_out);
 
-/**
+    /**
  *  @brief          項目の値を 32 ビット符号付き整数として取得します。
  *  @param[in]      item        対象。NULL を渡せます。
  *  @param[out]     value_out   値の格納先。NULL を渡せます。
@@ -260,9 +261,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt16Value(const cJSON *item, uint16_t *value
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-CJSON_PUBLIC(cJSON_bool) cJSON_GetInt32Value(const cJSON *item, int32_t *value_out);
+    CJSON_PUBLIC(cJSON_bool) cJSON_GetInt32Value(const cJSON *item, int32_t *value_out);
 
-/**
+    /**
  *  @brief          項目の値を 32 ビット符号なし整数として取得します。
  *  @param[in]      item        対象。NULL を渡せます。
  *  @param[out]     value_out   値の格納先。NULL を渡せます。
@@ -281,9 +282,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt32Value(const cJSON *item, int32_t *value_o
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt32Value(const cJSON *item, uint32_t *value_out);
+    CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt32Value(const cJSON *item, uint32_t *value_out);
 
-/**
+    /**
  *  @brief          項目の値を 64 ビット符号付き整数として取得します。
  *  @param[in]      item        対象。NULL を渡せます。
  *  @param[out]     value_out   値の格納先。NULL を渡せます。
@@ -302,9 +303,9 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt32Value(const cJSON *item, uint32_t *value
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-CJSON_PUBLIC(cJSON_bool) cJSON_GetInt64Value(const cJSON *item, int64_t *value_out);
+    CJSON_PUBLIC(cJSON_bool) cJSON_GetInt64Value(const cJSON *item, int64_t *value_out);
 
-/**
+    /**
  *  @brief          項目の値を 64 ビット符号なし整数として取得します。
  *  @param[in]      item        対象。NULL を渡せます。
  *  @param[out]     value_out   値の格納先。NULL を渡せます。
@@ -323,7 +324,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt64Value(const cJSON *item, int64_t *value_o
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt64Value(const cJSON *item, uint64_t *value_out);
+    CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt64Value(const cJSON *item, uint64_t *value_out);
 
 #ifdef __cplusplus
 }

@@ -125,7 +125,7 @@ TEST_F(cjsonIntegerTest, create_functions_emit_expected_text)
 TEST_F(cjsonIntegerTest, get_value_checks_range_boundaries)
 {
     // Arrange
-    cJSON *inRange = cJSON_CreateInt32(127);   // [状態] - int8_t の上限に収まる項目を用意する。
+    cJSON *inRange = cJSON_CreateInt32(127);    // [状態] - int8_t の上限に収まる項目を用意する。
     cJSON *outOfRange = cJSON_CreateInt32(128); // [状態] - int8_t の上限を 1 超える項目を用意する。
     int8_t value = 42;                          // [状態] - 範囲外時に変更されないことを見るため 42 で初期化する。
 

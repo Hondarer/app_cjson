@@ -37,7 +37,7 @@ TEST(exportTest, cjson_symbols_match_api_table)
 #if defined(PLATFORM_WINDOWS)
     expected.insert(testing::identManifestSymbolName(
         "libcjson_app" TESTFW_SHARED_LIBRARY_EXTENSION)); // [状態] - IDENT manifest シンボル名を期待値へ追加する。
-#endif                                                /* PLATFORM_WINDOWS */
+#endif                                                    /* PLATFORM_WINDOWS */
     std::string path = findWorkspaceRoot() + "/app/cjson/prod/lib/libcjson_app" +
                        TESTFW_SHARED_LIBRARY_EXTENSION; // [状態] - 検査対象を libcjson_app の動的ライブラリとする。
 

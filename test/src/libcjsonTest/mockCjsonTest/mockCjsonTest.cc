@@ -132,9 +132,10 @@ TEST(mockCjsonTest, delegates_jsonc_parser)
 TEST(mockCjsonTest, rejects_invalid_jsonc)
 {
     // Arrange
-    const char *empty_member = "{,}"; // [状態] - 空のメンバーを持つ不正な JSONC を用意する。
+    const char *empty_member = "{,}";            // [状態] - 空のメンバーを持つ不正な JSONC を用意する。
     const char *missing_value = "{\"value\":,}"; // [状態] - 値が欠落した不正な JSONC を用意する。
-    const char *unclosed_comment = "{/" "* comment"; // [状態] - 閉じていないコメントを持つ不正な JSONC を用意する。
+    const char *unclosed_comment = "{/"
+                                   "* comment"; // [状態] - 閉じていないコメントを持つ不正な JSONC を用意する。
 
     // Pre-Assert
 

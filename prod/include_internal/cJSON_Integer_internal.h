@@ -32,10 +32,11 @@
 #include <cJSON.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/**
+    /**
  *  @brief          数値トークンが正確な整数なら、正規化した表記を保持します。
  *  @param[in,out]  item    対象の数値項目。NULL を渡せます。
  *  @param[in]      token   数値トークンの先頭。NULL を渡せます。
@@ -56,9 +57,9 @@ extern "C" {
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, size_t length);
+    cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, size_t length);
 
-/**
+    /**
  *  @brief          保持している正確な整数の十進表記を返します。
  *  @param[in]      item    対象。NULL を渡せます。
  *  @return         十進表記。保持していない場合は NULL。
@@ -77,9 +78,9 @@ cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, siz
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-const char *cjson_internal_integer_text(const cJSON *item);
+    const char *cjson_internal_integer_text(const cJSON *item);
 
-/**
+    /**
  *  @brief          保持している正確な整数の表記を破棄します。
  *  @param[in,out]  item    対象。NULL を渡せます。
  *
@@ -92,7 +93,7 @@ const char *cjson_internal_integer_text(const cJSON *item);
  *  異なる @p item に対する操作は同時に実行できます。\n
  *  同一 @p item に対する操作は、呼び出し側で直列化してください。
  */
-void cjson_internal_integer_clear(cJSON *item);
+    void cjson_internal_integer_clear(cJSON *item);
 
 #ifdef __cplusplus
 }
