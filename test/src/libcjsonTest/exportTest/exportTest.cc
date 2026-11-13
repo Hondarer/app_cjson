@@ -9,19 +9,19 @@
 #include <string>
 #include <type_traits>
 
-#define MOCK_CJSON_RET(return_type, name, parameters, arguments, matchers) \
-    using expected_##name##_fn = return_type(CJSON_STDCALL *) parameters; \
-    static_assert(std::is_same<decltype(&name), expected_##name##_fn>::value, #name " のシグネチャが不一致です");
-#define MOCK_CJSON_VOID(return_type, name, parameters, arguments, matchers) \
-    using expected_##name##_fn = return_type(CJSON_STDCALL *) parameters; \
-    static_assert(std::is_same<decltype(&name), expected_##name##_fn>::value, #name " のシグネチャが不一致です");
+#define MOCK_CJSON_RET(return_type, original_name, api_name, real_parameters, real_arguments, mock_parameters, mock_arguments, matchers) \
+    using expected_##original_name##_fn = return_type(CJSON_STDCALL *) real_parameters; \
+    static_assert(std::is_same<decltype(&api_name), expected_##original_name##_fn>::value, #api_name " のシグネチャが不一致です");
+#define MOCK_CJSON_VOID(return_type, original_name, api_name, real_parameters, real_arguments, mock_parameters, mock_arguments, matchers) \
+    using expected_##original_name##_fn = return_type(CJSON_STDCALL *) real_parameters; \
+    static_assert(std::is_same<decltype(&api_name), expected_##original_name##_fn>::value, #api_name " のシグネチャが不一致です");
 #include <mock_cjson_api_table.h>
 #undef MOCK_CJSON_VOID
 #undef MOCK_CJSON_RET
 
 static const char *const kExpectedExportNames[] = {
-#define MOCK_CJSON_RET(return_type, name, parameters, arguments, matchers)  #name,
-#define MOCK_CJSON_VOID(return_type, name, parameters, arguments, matchers) #name,
+#define MOCK_CJSON_RET(return_type, original_name, api_name, real_parameters, real_arguments, mock_parameters, mock_arguments, matchers)  #api_name,
+#define MOCK_CJSON_VOID(return_type, original_name, api_name, real_parameters, real_arguments, mock_parameters, mock_arguments, matchers) #api_name,
 #include <mock_cjson_api_table.h>
 #undef MOCK_CJSON_VOID
 #undef MOCK_CJSON_RET

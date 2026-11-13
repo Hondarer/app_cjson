@@ -11,6 +11,7 @@ prod/libsrc/cjson へ展開する。外部ツール (unzip 等) に依存せず�
 """
 
 import argparse
+import hashlib
 import errno
 import os
 import re
@@ -48,6 +49,11 @@ MARKER_SOURCE = "cJSON.c"
 # 再展開要否の判定に使うスタンプ ファイル。
 STAMP_FILENAME = "make_extract.stamp"
 
+NAMESPACE_PREFIX = "cjson_app_"
+PUBLIC_HEADERS = ['cJSON.h', 'cJSON_Utils.h']
+NAMESPACE_HEADER = "cjson_app_namespace.h"
+UNDEF_HEADER = "cjson_app_undef.h"
+
 # 生成物を除外するための .gitignore を配置するディレクトリと、その内容。
 #
 # framework/makefw/makefiles/makelibsrc_c_cpp.mk / makesrc_c_cpp.mk は、
@@ -59,6 +65,7 @@ STAMP_FILENAME = "make_extract.stamp"
 # そのため、手動配置の .gitignore はここで毎回 (再展開の有無に関わらず)
 # 再生成し、`make clean` 後も次回 make で必ず復元されるようにする。
 GITIGNORE_TARGETS = {
+    ("prod", "include_internal"): [NAMESPACE_HEADER, UNDEF_HEADER],
     ("prod", "libsrc", "cjson"): ["cJSON.c", "cJSON_Utils.c", "LICENSE.cjson"],
 }
 
@@ -260,6 +267,13 @@ def compute_stamp_fields(zip_path, selected_name, patches_dir, apply_patches_mod
         "zip_mtime": repr(st.st_mtime),
         "zip_size": str(st.st_size),
         "patches_digest": apply_patches_mod.series_digest(Path(patches_dir)),
+        "namespace_inputs_digest": hashlib.sha256(
+            (Path(patches_dir).parent / "prod" / "public_symbols.txt").read_bytes()
+            + (Path(patches_dir).parent / "prod" / "public_api_macros.txt").read_bytes()
+        ).hexdigest(),
+        "namespace_generator_digest": hashlib.sha256(
+            (Path(__file__).resolve().parents[3] / "framework" / "makefw" / "bin_internal" / "generate_symbol_namespace.py").read_bytes()
+        ).hexdigest(),
     }
 
 
@@ -287,6 +301,9 @@ def write_stamp(path, fields):
 
 def needs_extraction(zip_path, app_dir, selected_name, patches_dir, apply_patches_mod):
     if any(not os.path.isfile(path) for path in iter_target_paths(app_dir)):
+        return True
+    generated_dir = os.path.join(app_dir, "prod", "include_internal")
+    if any(not os.path.isfile(os.path.join(generated_dir, name)) for name in (NAMESPACE_HEADER, UNDEF_HEADER)):
         return True
 
     current = read_stamp(stamp_path(app_dir))
@@ -329,6 +346,25 @@ def extract(zip_path, app_dir):
     return True
 
 
+def generate_namespace(app_dir, makefw_home, namespace_module):
+    """Generate internal remapping headers and rename public header identifiers."""
+    app_path = Path(app_dir)
+    prod_dir = app_path / "prod"
+    include_internal = prod_dir / "include_internal"
+    namespace_path = include_internal / NAMESPACE_HEADER
+    undef_path = include_internal / UNDEF_HEADER
+    symbols_path = prod_dir / "public_symbols.txt"
+    macros_path = prod_dir / "public_api_macros.txt"
+    mapping = namespace_module.generate(
+        symbols_path, macros_path, NAMESPACE_PREFIX, namespace_path, undef_path
+    )
+    for header_name in PUBLIC_HEADERS:
+        header_path = prod_dir / "include" / header_name
+        source = header_path.read_text(encoding="utf-8")
+        transformed = namespace_module.transform_public_header(source, mapping)
+        atomic_replace(str(header_path), transformed)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--app-dir", required=True)
@@ -342,6 +378,7 @@ def main():
 
     sys.path.insert(0, os.path.join(args.makefw_home, "bin_internal"))
     import apply_patches  # noqa: E402  (sys.path 設定後に import する)
+    import generate_symbol_namespace  # noqa: E402
 
     packages_dir = os.path.join(args.app_dir, "packages")
     patches_dir = os.path.join(args.app_dir, "patches")
@@ -376,6 +413,12 @@ def main():
         apply_patches.apply_series(Path(patches_dir), Path(args.app_dir))
     except apply_patches.PatchError as exc:
         print(f"ERROR: cJSON パッチの適用に失敗しました: {exc}", file=sys.stderr)
+        return 3
+
+    try:
+        generate_namespace(args.app_dir, args.makefw_home, generate_symbol_namespace)
+    except (OSError, ValueError) as exc:
+        print(f"ERROR: cjson 公開 API 名前空間の生成に失敗しました: {exc}", file=sys.stderr)
         return 3
 
     write_stamp(

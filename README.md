@@ -5,6 +5,14 @@
 このリポジトリは [c-modernization-kit](https://github.com/Hondarer/c-modernization-kit) の `app/cjson` としてサブモジュール管理される、個別アプリ リポジトリです。  
 c-modernization-kit のワークスペース内 (`framework/makefw` 等と組み合わせた make ビルド環境) で利用することを前提としたラッパー リポジトリであり、本リポジトリ単体ではビルドできません。
 
+## 固有の公開 API 名で OS のライブラリと分離します
+
+OS の同名ライブラリと同じプロセスで関数解決が混ざることを防ぐため、公開関数・変数と関数呼び出しマクロに `cjson_app_` を付けます。  
+たとえば `cJSON_Parse` の利用側は `cjson_app_cJSON_Parse` を呼び出します。  
+型名、定数、構造体フィールドは配布ライブラリの定義を使います。  
+旧名の alias と mock ラッパーは提供しないため、既存の利用側はソースを更新して再ビルド・再リンクしてください。  
+`dlsym()` と `GetProcAddress()` に渡す文字列も固有名へ変更します。
+
 ## 概要
 
 [cJSON](https://github.com/DaveGamble/cJSON) (MIT License) のコア機能 (cJSON.c / cJSON.h) および拡張ユーティリティ (cJSON_Utils.c / cJSON_Utils.h) を、c-modernization-kit の makefw 規約に沿って取り込んだラッパー ライブラリです。  
@@ -25,20 +33,20 @@ JSONC のコメントと末尾カンマを扱う拡張 API を `cJSON_JSONC.h` �
 
 ## JSONC の解析
 
-`cJSON_ParseJSONCWithLength()` は、行コメント、ブロック コメント、オブジェクトと配列の末尾カンマを含む文字列を解析します。  
-長さには終端 NUL を含まないバイト数を指定します。入力は変更せず、成功時の戻り値は `cJSON_Delete()` で解放します。構文エラーやメモリ不足の場合は `NULL` を返します。
+`cjson_app_cJSON_ParseJSONCWithLength()` は、行コメント、ブロック コメント、オブジェクトと配列の末尾カンマを含む文字列を解析します。  
+長さには終端 NUL を含まないバイト数を指定します。入力は変更せず、成功時の戻り値は `cjson_app_cJSON_Delete()` で解放します。構文エラーやメモリ不足の場合は `NULL` を返します。
 
 ```c
 #include <cJSON_JSONC.h>
 #include <string.h>
 
 const char *source = "{\"ports\": [5001,], // first service\n}";
-cJSON *root = cJSON_ParseJSONCWithLength(source, strlen(source));
+cJSON *root = cjson_app_cJSON_ParseJSONCWithLength(source, strlen(source));
 /* root を使用する */
-cJSON_Delete(root);
+cjson_app_cJSON_Delete(root);
 ```
 
-通常の `cJSON_Parse()` は JSONC に変更せず、従来どおり JSON を解析します。
+通常の `cjson_app_cJSON_Parse()` は JSONC に変更せず、従来どおり JSON を解析します。
 
 ## パッケージの配置手順 (初回セットアップ)
 
@@ -68,7 +76,7 @@ cJSON 本体への変更はすべてこのパッチ経由で行い、展開直�
 この場合、採用されなかったアーカイブを削除するよう警告が表示されるので、単一ファイル運用に戻してください。
 
 `app/cjson/patches/0002-exact-integer-hooks.patch` により、数値項目の `valuestring` が非 `NULL` になる場合があります (正確な整数値を保持するための副作用)。  
-数値項目から文字列を取得する際は、型を検査する `cJSON_GetStringValue` を使用してください。`valuestring` を直接参照しないでください。
+数値項目から文字列を取得する際は、型を検査する `cjson_app_cJSON_GetStringValue` を使用してください。`valuestring` を直接参照しないでください。
 
 ## バージョン更新手順
 
@@ -90,6 +98,17 @@ cJSON は MIT License です。ライセンス条文の正本は `packages/cJSON
 - `test/src/libcjsonTest/exportTest/` : API 表、IDENT manifest、実ライブラリの全エクスポートが一致することを検出するテスト
 
 ## cJSON API モック
+
+テスト対象ソースを `TEST_SRCS` に指定し、mock をリンクするテストの `makepart.mk` に `DEFINES += MOCK_CJSON_ENABLE_CALLER` を追加します。  
+これにより呼び出し元情報の注入を有効にし、実ライブラリを使うテストには注入しません。
+
+mock の宣言と注入マクロは API 表から生成し、mock ライブラリのビルド前に自動更新します。  
+生成済みの `test/include/mock_cjson_overrides.h` は直接編集せず、通常 API 表と、可変長 API がある場合は専用の可変長 API 表を変更してください。
+
+通常の API 呼び出しは差し替えヘッダーを通し、mock の先頭 3 引数へ呼び出し元のファイル名、行番号、関数名を渡します。  
+`EXPECT_CALL` と `ON_CALL` でも、この 3 引数を実 API の引数より先に指定します。  
+新しい固有名の関数アドレスを取得して関数ポインター経由で呼び出す場合も mock に到達しますが、呼び出し元は取得できないため、ファイル名と関数名は `"<unknown>"`、行番号は `0` になります。  
+実委譲は app の固有シンボルだけを解決し、OS 側の旧名へ戻す探索は行いません。
 
 `test/lib/libmock_cjson.a` は、cJSON を利用する app の単体テストで使用する Google Mock 対応ライブラリです。  
 `cJSON.h`、`cJSON_Utils.h`、`cJSON_Integer.h`、`cJSON_JSONC.h` の公開関数を対象とし、`Mock_cjson` を生成しない場合と、生成後に個別の動作を指定しない場合は、`libcjson_app` の実関数を呼び出します。
@@ -113,14 +132,14 @@ Windows では、`CJSON_HIDE_SYMBOLS` により cJSON の DLL import 宣言を�
 ```cpp
 NiceMock<Mock_cjson> mock_cjson;
 
-EXPECT_CALL(mock_cjson, cJSON_Parse(StrEq("{}")))
+EXPECT_CALL(mock_cjson, cjson_app_cJSON_Parse(_, _, _, StrEq("{}")))
     .WillOnce(Return(nullptr));
 ```
 
 実オブジェクトを生成せずに単体隔離する場合は、SUT が呼び出す関数をすべてスタブしてください。  
 スタブしていない呼び出しは実関数へ委譲されるため、偽ポインターを渡すと実関数が失敗します。
 
-テスト用のポインターを返すように変更した場合は、実関数がそのポインターを解放しないよう、対応する `cJSON_Delete` や `cJSON_free` の動作も指定してください。
+テスト用のポインターを返すように変更した場合は、実関数がそのポインターを解放しないよう、対応する `cjson_app_cJSON_Delete` や `cjson_app_cJSON_free` の動作も指定してください。
 
 `cJSON` は公開構造体です。`item->valuestring` や `cJSON_ArrayForEach`、`cJSON_SetIntValue`、`cJSON_SetBoolValue` はフィールドを直接読み書きするため、関数モックでは差し替えられません。  
 偽ポインターを返す場合は、SUT がフィールドへアクセスしないこと、またはテスト側で `cJSON` グラフを組み立てることを確認してください。

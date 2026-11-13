@@ -29,3 +29,9 @@ endif
 # 第三者管理ライブラリは、OS やほかの製品の同名ライブラリと区別するため、名前に接尾辞 _app を付ける。
 TARGET := cjson_app
 LIB_TYPE = shared
+ifdef PLATFORM_WINDOWS
+    CFLAGS += /FI"$(MYAPP_DIR)/prod/include_internal/cjson_app_namespace.h"
+else
+    CFLAGS += -include "$(MYAPP_DIR)/prod/include_internal/cjson_app_namespace.h"
+    LDFLAGS += -Wl,-soname,libcjson_app.so
+endif

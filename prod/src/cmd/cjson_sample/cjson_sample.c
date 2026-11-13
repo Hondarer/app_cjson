@@ -6,7 +6,7 @@
  *  @date           2026/07/26
  *  @version        1.0.0
  *
- *  オブジェクトへ name / version フィールドを追加し、cJSON_Print で
+ *  オブジェクトへ name / version フィールドを追加し、cjson_app_cJSON_Print で
  *  シリアライズした JSON 文字列を標準出力に出力します。
  *
  *  @copyright      Copyright (C) Tetsuo Honda. 2026. All rights reserved.
@@ -24,18 +24,18 @@
  */
 int main(void)
 {
-    cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "name", "cjson_sample");
-    cJSON_AddNumberToObject(root, "version", 1);
+    cJSON *root = cjson_app_cJSON_CreateObject();
+    cjson_app_cJSON_AddStringToObject(root, "name", "cjson_sample");
+    cjson_app_cJSON_AddNumberToObject(root, "version", 1);
 
-    char *text = cJSON_Print(root);
+    char *text = cjson_app_cJSON_Print(root);
     if (text != NULL)
     {
         printf("%s\n", text);
-        cJSON_free(text);
+        cjson_app_cJSON_free(text);
     }
 
-    cJSON_Delete(root);
+    cjson_app_cJSON_Delete(root);
 
     return 0;
 }

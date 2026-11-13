@@ -17,24 +17,24 @@ TEST_F(cjsonTest, parse_and_print_roundtrip)
     // Pre-Assert
 
     // Act
-    cJSON *root = cJSON_Parse(input); // [手順] - JSON 文字列 input を指定して cJSON_Parse() を呼び出す。
+    cJSON *root = cjson_app_cJSON_Parse(input); // [手順] - JSON 文字列 input を指定して cjson_app_cJSON_Parse() を呼び出す。
 
     // Assert
-    ASSERT_NE(nullptr, root); // [確認_正常系] - cJSON_Parse() の戻り値が nullptr 以外であること。
-    cJSON *name = cJSON_GetObjectItemCaseSensitive(root, "name");
+    ASSERT_NE(nullptr, root); // [確認_正常系] - cjson_app_cJSON_Parse() の戻り値が nullptr 以外であること。
+    cJSON *name = cjson_app_cJSON_GetObjectItemCaseSensitive(root, "name");
     ASSERT_NE(
         nullptr,
-        name); // [確認_正常系] - "name" を取得した cJSON_GetObjectItemCaseSensitive() の戻り値が nullptr 以外であること。
+        name); // [確認_正常系] - "name" を取得した cjson_app_cJSON_GetObjectItemCaseSensitive() の戻り値が nullptr 以外であること。
     EXPECT_STREQ("cjson",
-                 cJSON_GetStringValue(name)); // [確認_正常系] - cJSON_GetStringValue() の戻り値が "cjson" であること。
-    cJSON *version = cJSON_GetObjectItemCaseSensitive(root, "version");
+                 cjson_app_cJSON_GetStringValue(name)); // [確認_正常系] - cjson_app_cJSON_GetStringValue() の戻り値が "cjson" であること。
+    cJSON *version = cjson_app_cJSON_GetObjectItemCaseSensitive(root, "version");
     ASSERT_NE(
         nullptr,
-        version); // [確認_正常系] - "version" を取得した cJSON_GetObjectItemCaseSensitive() の戻り値が nullptr 以外であること。
+        version); // [確認_正常系] - "version" を取得した cjson_app_cJSON_GetObjectItemCaseSensitive() の戻り値が nullptr 以外であること。
     EXPECT_EQ(1, version->valueint); // [確認_正常系] - version->valueint が 1 であること。
 
     // Cleanup
-    cJSON_Delete(root);
+    cjson_app_cJSON_Delete(root);
 }
 
 // 不正な JSON のパースが NULL を返すことの確認
@@ -46,36 +46,36 @@ TEST_F(cjsonTest, parse_invalid_json_returns_null)
     // Pre-Assert
 
     // Act
-    cJSON *root = cJSON_Parse(input); // [手順] - 不正な JSON 文字列 input を指定して cJSON_Parse() を呼び出す。
+    cJSON *root = cjson_app_cJSON_Parse(input); // [手順] - 不正な JSON 文字列 input を指定して cjson_app_cJSON_Parse() を呼び出す。
 
     // Assert
-    EXPECT_EQ(nullptr, root); // [確認_異常系] - cJSON_Parse() の戻り値が nullptr であること。
+    EXPECT_EQ(nullptr, root); // [確認_異常系] - cjson_app_cJSON_Parse() の戻り値が nullptr であること。
 }
 
 // MergePatch が patch を適用することの確認
 TEST_F(cjsonTest, utils_merge_patch_applies_patch)
 {
     // Arrange
-    cJSON *target = cJSON_Parse(
+    cJSON *target = cjson_app_cJSON_Parse(
         "{\"name\":\"cjson\",\"version\":1}");     // [状態] - name が "cjson"、version が 1 の target を用意する。
-    cJSON *patch = cJSON_Parse("{\"version\":2}"); // [状態] - version が 2 の patch を用意する。
+    cJSON *patch = cjson_app_cJSON_Parse("{\"version\":2}"); // [状態] - version が 2 の patch を用意する。
 
     // Pre-Assert
 
     // Act
-    cJSON *merged = cJSONUtils_MergePatch(
+    cJSON *merged = cjson_app_cJSONUtils_MergePatch(
         target,
-        patch); // [手順] - RFC 7396 準拠のマージとして、target と patch を指定して cJSONUtils_MergePatch() を呼び出す。
+        patch); // [手順] - RFC 7396 準拠のマージとして、target と patch を指定して cjson_app_cJSONUtils_MergePatch() を呼び出す。
 
     // Assert
-    ASSERT_NE(nullptr, merged); // [確認_正常系] - cJSONUtils_MergePatch() の戻り値が nullptr 以外であること。
-    cJSON *version = cJSON_GetObjectItemCaseSensitive(merged, "version");
+    ASSERT_NE(nullptr, merged); // [確認_正常系] - cjson_app_cJSONUtils_MergePatch() の戻り値が nullptr 以外であること。
+    cJSON *version = cjson_app_cJSON_GetObjectItemCaseSensitive(merged, "version");
     ASSERT_NE(
         nullptr,
-        version); // [確認_正常系] - マージ後に "version" を取得した cJSON_GetObjectItemCaseSensitive() の戻り値が nullptr 以外であること。
+        version); // [確認_正常系] - マージ後に "version" を取得した cjson_app_cJSON_GetObjectItemCaseSensitive() の戻り値が nullptr 以外であること。
     EXPECT_EQ(2, version->valueint); // [確認_正常系] - version->valueint が 2 であること。
 
     // Cleanup
-    cJSON_Delete(merged);
-    cJSON_Delete(patch);
+    cjson_app_cJSON_Delete(merged);
+    cjson_app_cJSON_Delete(patch);
 }

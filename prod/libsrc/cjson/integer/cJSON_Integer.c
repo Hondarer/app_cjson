@@ -84,7 +84,7 @@ static cJSON_bool is_plain_integer_token(const char *token, const size_t length,
 
 cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, const size_t length)
 {
-    if ((!cJSON_IsNumber(item)) || ((item->type & cJSON_IsReference) != 0))
+    if ((!cjson_app_cJSON_IsNumber(item)) || ((item->type & cJSON_IsReference) != 0))
     {
         return false;
     }
@@ -98,7 +98,7 @@ cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, con
     /* strtoll / strtoull は NUL 終端文字列を要求する。token の length バイト目以降は
        この数値トークンの一部ではない可能性があるため、length バイトだけを切り出した
        一時バッファーへコピーしてから解釈する。 */
-    char *buffer = (char *)cJSON_malloc(length + 1U);
+    char *buffer = (char *)cjson_app_cJSON_malloc(length + 1U);
     if (buffer == NULL)
     {
         return false;
@@ -116,7 +116,7 @@ cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, con
         long long value = strtoll(buffer, &endptr, 10);
         if ((errno == ERANGE) || (endptr != (buffer + length)))
         {
-            cJSON_free(buffer);
+            cjson_app_cJSON_free(buffer);
             return false;
         }
         /* strtoll / strtoull で解釈し直した値から表記を作り直すことで、
@@ -128,13 +128,13 @@ cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, con
         unsigned long long value = strtoull(buffer, &endptr, 10);
         if ((errno == ERANGE) || (endptr != (buffer + length)))
         {
-            cJSON_free(buffer);
+            cjson_app_cJSON_free(buffer);
             return false;
         }
         written = snprintf(text, sizeof(text), "%" PRIu64, (uint64_t)value);
     }
 
-    cJSON_free(buffer);
+    cjson_app_cJSON_free(buffer);
 
     if ((written < 0) || ((size_t)written >= sizeof(text)))
     {
@@ -143,7 +143,7 @@ cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, con
         return false;
     }
 
-    char *stored = (char *)cJSON_malloc((size_t)written + 1U);
+    char *stored = (char *)cjson_app_cJSON_malloc((size_t)written + 1U);
     if (stored == NULL)
     {
         return false;
@@ -152,7 +152,7 @@ cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, con
 
     if (item->valuestring != NULL)
     {
-        cJSON_free(item->valuestring);
+        cjson_app_cJSON_free(item->valuestring);
     }
     item->valuestring = stored;
 
@@ -161,7 +161,7 @@ cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, con
 
 const char *cjson_internal_integer_text(const cJSON *item)
 {
-    if ((!cJSON_IsNumber(item)) || (item->valuestring == NULL))
+    if ((!cjson_app_cJSON_IsNumber(item)) || (item->valuestring == NULL))
     {
         return NULL;
     }
@@ -209,7 +209,7 @@ const char *cjson_internal_integer_text(const cJSON *item)
 
 void cjson_internal_integer_clear(cJSON *item)
 {
-    if (!cJSON_IsNumber(item))
+    if (!cjson_app_cJSON_IsNumber(item))
     {
         return;
     }
@@ -222,7 +222,7 @@ void cjson_internal_integer_clear(cJSON *item)
 
     if (item->valuestring != NULL)
     {
-        cJSON_free(item->valuestring);
+        cjson_app_cJSON_free(item->valuestring);
         item->valuestring = NULL;
     }
 }
@@ -230,14 +230,14 @@ void cjson_internal_integer_clear(cJSON *item)
 /**
  *  @brief          符号付き整数の項目を生成する共通処理です。
  *
- *  cJSON_CreateNumber((double)value) で valuedouble / valueint を上流と同じ規則で
+ *  cjson_app_cJSON_CreateNumber((double)value) で valuedouble / valueint を上流と同じ規則で
  *  設定したうえで、正規化した十進表記を valuestring へ設定します。value を double へ
- *  変換する時点で 2^53 を超える値の精度は失われますが、これは既存の cJSON_CreateNumber
+ *  変換する時点で 2^53 を超える値の精度は失われますが、これは既存の cjson_app_cJSON_CreateNumber
  *  と同じ挙動であり意図的です。正確な値は valuestring 側で保持します。
  */
 static cJSON *create_signed_integer(const int64_t value)
 {
-    cJSON *item = cJSON_CreateNumber((double)value);
+    cJSON *item = cjson_app_cJSON_CreateNumber((double)value);
     if (item == NULL)
     {
         return NULL;
@@ -248,7 +248,7 @@ static cJSON *create_signed_integer(const int64_t value)
     if ((written < 0) || ((size_t)written >= sizeof(text)) ||
         (!cjson_internal_integer_store_text(item, text, (size_t)written)))
     {
-        cJSON_Delete(item);
+        cjson_app_cJSON_Delete(item);
         return NULL;
     }
 
@@ -258,7 +258,7 @@ static cJSON *create_signed_integer(const int64_t value)
 /** @copydoc create_signed_integer */
 static cJSON *create_unsigned_integer(const uint64_t value)
 {
-    cJSON *item = cJSON_CreateNumber((double)value);
+    cJSON *item = cjson_app_cJSON_CreateNumber((double)value);
     if (item == NULL)
     {
         return NULL;
@@ -269,7 +269,7 @@ static cJSON *create_unsigned_integer(const uint64_t value)
     if ((written < 0) || ((size_t)written >= sizeof(text)) ||
         (!cjson_internal_integer_store_text(item, text, (size_t)written)))
     {
-        cJSON_Delete(item);
+        cjson_app_cJSON_Delete(item);
         return NULL;
     }
 
@@ -284,7 +284,7 @@ static cJSON *create_unsigned_integer(const uint64_t value)
  */
 static cJSON_bool try_get_signed(const cJSON *item, int64_t *value_out)
 {
-    if (!cJSON_IsNumber(item))
+    if (!cjson_app_cJSON_IsNumber(item))
     {
         return false;
     }
@@ -341,7 +341,7 @@ static cJSON_bool try_get_signed(const cJSON *item, int64_t *value_out)
 /** @copydoc try_get_signed */
 static cJSON_bool try_get_unsigned(const cJSON *item, uint64_t *value_out)
 {
-    if (!cJSON_IsNumber(item))
+    if (!cjson_app_cJSON_IsNumber(item))
     {
         return false;
     }
@@ -422,52 +422,52 @@ static cJSON_bool get_unsigned_ranged(const cJSON *item, const uint64_t max_valu
     return true;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_HasExactInteger(const cJSON *item)
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_HasExactInteger(const cJSON *item)
 {
     return (cJSON_bool)(cjson_internal_integer_text(item) != NULL);
 }
 
-CJSON_PUBLIC(cJSON *) cJSON_CreateInt8(const int8_t value)
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt8(const int8_t value)
 {
     return create_signed_integer((int64_t)value);
 }
 
-CJSON_PUBLIC(cJSON *) cJSON_CreateUInt8(const uint8_t value)
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt8(const uint8_t value)
 {
     return create_unsigned_integer((uint64_t)value);
 }
 
-CJSON_PUBLIC(cJSON *) cJSON_CreateInt16(const int16_t value)
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt16(const int16_t value)
 {
     return create_signed_integer((int64_t)value);
 }
 
-CJSON_PUBLIC(cJSON *) cJSON_CreateUInt16(const uint16_t value)
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt16(const uint16_t value)
 {
     return create_unsigned_integer((uint64_t)value);
 }
 
-CJSON_PUBLIC(cJSON *) cJSON_CreateInt32(const int32_t value)
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt32(const int32_t value)
 {
     return create_signed_integer((int64_t)value);
 }
 
-CJSON_PUBLIC(cJSON *) cJSON_CreateUInt32(const uint32_t value)
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt32(const uint32_t value)
 {
     return create_unsigned_integer((uint64_t)value);
 }
 
-CJSON_PUBLIC(cJSON *) cJSON_CreateInt64(const int64_t value)
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt64(const int64_t value)
 {
     return create_signed_integer(value);
 }
 
-CJSON_PUBLIC(cJSON *) cJSON_CreateUInt64(const uint64_t value)
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt64(const uint64_t value)
 {
     return create_unsigned_integer(value);
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_GetInt8Value(const cJSON *item, int8_t *value_out)
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt8Value(const cJSON *item, int8_t *value_out)
 {
     int64_t value;
 
@@ -482,7 +482,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt8Value(const cJSON *item, int8_t *value_out
     return true;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt8Value(const cJSON *item, uint8_t *value_out)
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt8Value(const cJSON *item, uint8_t *value_out)
 {
     uint64_t value;
 
@@ -497,7 +497,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt8Value(const cJSON *item, uint8_t *value_o
     return true;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_GetInt16Value(const cJSON *item, int16_t *value_out)
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt16Value(const cJSON *item, int16_t *value_out)
 {
     int64_t value;
 
@@ -512,7 +512,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt16Value(const cJSON *item, int16_t *value_o
     return true;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt16Value(const cJSON *item, uint16_t *value_out)
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt16Value(const cJSON *item, uint16_t *value_out)
 {
     uint64_t value;
 
@@ -527,7 +527,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt16Value(const cJSON *item, uint16_t *value
     return true;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_GetInt32Value(const cJSON *item, int32_t *value_out)
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt32Value(const cJSON *item, int32_t *value_out)
 {
     int64_t value;
 
@@ -542,7 +542,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt32Value(const cJSON *item, int32_t *value_o
     return true;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt32Value(const cJSON *item, uint32_t *value_out)
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt32Value(const cJSON *item, uint32_t *value_out)
 {
     uint64_t value;
 
@@ -557,7 +557,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt32Value(const cJSON *item, uint32_t *value
     return true;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_GetInt64Value(const cJSON *item, int64_t *value_out)
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt64Value(const cJSON *item, int64_t *value_out)
 {
     int64_t value;
 
@@ -572,7 +572,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetInt64Value(const cJSON *item, int64_t *value_o
     return true;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_GetUInt64Value(const cJSON *item, uint64_t *value_out)
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt64Value(const cJSON *item, uint64_t *value_out)
 {
     uint64_t value;
 

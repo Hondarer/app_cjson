@@ -4,3 +4,6 @@ ifdef PLATFORM_WINDOWS
 endif
 
 LIBS += mock_cjson
+DEFINES += MOCK_CJSON_ENABLE_CALLER
+TEST_SRCS += $(MYAPP_DIR)/test/src/libcjsonTest/mockCjsonTest/caller_info.c \
+    $(MYAPP_DIR)/test/src/libcjsonTest/mockCjsonTest/caller_info_cpp.cc

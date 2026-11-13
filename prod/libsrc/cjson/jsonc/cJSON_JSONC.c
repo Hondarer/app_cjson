@@ -141,7 +141,7 @@ static void config_strip_trailing_commas(char *text)
 }
 
 /* Doxygen コメントは、ヘッダーに記載 */
-CJSON_PUBLIC(cJSON *) cJSON_ParseJSONCWithLength(const char *value, size_t buffer_length)
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_ParseJSONCWithLength(const char *value, size_t buffer_length)
 {
     char *normalized;
     cJSON *result;
@@ -152,7 +152,7 @@ CJSON_PUBLIC(cJSON *) cJSON_ParseJSONCWithLength(const char *value, size_t buffe
     {
         return NULL;
     }
-    normalized = (char *)cJSON_malloc(buffer_length + 1U);
+    normalized = (char *)cjson_app_cJSON_malloc(buffer_length + 1U);
     if (normalized == NULL)
     {
         return NULL;
@@ -166,13 +166,13 @@ CJSON_PUBLIC(cJSON *) cJSON_ParseJSONCWithLength(const char *value, size_t buffe
     else
     {
         config_strip_trailing_commas(normalized);
-        result = cJSON_ParseWithLengthOpts(normalized, buffer_length + 1U, NULL, 1);
+        result = cjson_app_cJSON_ParseWithLengthOpts(normalized, buffer_length + 1U, NULL, 1);
     }
     bytes = (volatile unsigned char *)normalized;
     for (i = 0U; i < buffer_length + 1U; i++)
     {
         bytes[i] = 0U;
     }
-    cJSON_free(normalized);
+    cjson_app_cJSON_free(normalized);
     return result;
 }
