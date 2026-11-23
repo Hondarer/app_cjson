@@ -33,20 +33,38 @@ JSONC のコメントと末尾カンマを扱う拡張 API を `cJSON_JSONC.h` �
 
 ## JSONC の解析
 
-`cjson_app_cJSON_ParseJSONCWithLength()` は、行コメント、ブロック コメント、オブジェクトと配列の末尾カンマを含む文字列を解析します。  
-長さには終端 NUL を含まないバイト数を指定します。入力は変更せず、成功時の戻り値は `cjson_app_cJSON_Delete()` で解放します。構文エラーやメモリ不足の場合は `NULL` を返します。
+`cjson_app_cJSON_ParseJSONCWithLengthOpts()` は、行コメント、ブロック コメント、オブジェクトと配列の末尾カンマを含む文字列を解析し、失敗の種別と構文の誤りの位置を返します。  
+`cjson_app_cJSON_ParseJSONCWithLength()` は、この関数へ委譲して結果の木だけを返します。解析の間に確保が失敗した場合は、cJSON の解析が成功しても結果を解放して `NULL` を返します。整数の付加情報の確保の失敗も同じです。  
+長さには終端 NUL を含まないバイト数を指定します。入力は変更しません。成功時の戻り値は `cjson_app_cJSON_Delete()` で解放します。  
+`error_offset` は cJSON が解析を止めた byte 位置です。誤りの字句の位置と一致しない場合があります。たとえば `{,}` では `}`、文字列の不正なエスケープでは `\` を指します。
+
+`libcjson_app` は、ロードの時に 1 回だけ、要求サイズを記録する確保と、解放の前に領域を消去するフックを `cJSON_InitHooks()` で設定します。  
+実行中にフックを変えると、ほかの解析とデータ競合になり、Windows の静的 CRT ではモジュールごとにヒープが分かれて解放が壊れるためです。  
+ロード後の `cJSON_InitHooks()` による解除と再差し替えは、全スレッドを止めた場合も含めて禁止します。
+
+このフックは、`libcjson_app` を使うすべての確保にかかります。JSONC 以外の直接の解析、生成、更新、出力、`cJSON_Utils`、整数拡張も対象です。  
+確保ごとにヘッダー分の容量が増え、解放の時間は要求サイズに比例します。  
+cJSON が所有する領域と出力バッファーは `cjson_app_cJSON_free()` で解放します。通常の `free()` と `realloc()` は使いません。  
+通常の `malloc()` で確保した領域を、cJSON が所有する値やキーへ代入しません。参照として渡した外部所有の文字列は消去しません。
+
+新旧の JSONC の関数は、プロセス全体で 1 つの静的なロックを共有し、cJSON 本体の解析呼び出しだけを直列に実行します。ロックの生成と破棄はありません。  
+struct-meta の `struct_meta_json_file_load()` が呼ぶ `cjson_app_cJSON_Parse()` と、利用側が直接呼ぶ `cJSON_Parse` 系は、このロックを通りません。  
+それらと JSONC の解析、または直接の解析どうしを同時に実行する場合と、解析中に `cJSON_GetErrorPtr()` を参照する場合は、利用側が排他します。  
+この排他は、ロード後のフックの変更を許しません。利用側が `cJSON_InitHooks()` を呼ぶことも、同じ理由で禁止します。
 
 ```c
 #include <cJSON_JSONC.h>
 #include <string.h>
 
 const char *source = "{\"ports\": [5001,], // first service\n}";
-cJSON *root = cjson_app_cJSON_ParseJSONCWithLength(source, strlen(source));
+cjson_app_jsonc_status status = CJSON_APP_JSONC_INVALID_ARGUMENT;
+size_t error_offset = 0U;
+cJSON *root = cjson_app_cJSON_ParseJSONCWithLengthOpts(source, strlen(source), &status, &error_offset);
 /* root を使用する */
 cjson_app_cJSON_Delete(root);
 ```
 
-通常の `cjson_app_cJSON_Parse()` は JSONC に変更せず、従来どおり JSON を解析します。
+通常の `cjson_app_cJSON_Parse()` は JSONC に変更せず、従来どおり JSON を解析します。この解析は上記のロックを通りません。
 
 ## パッケージの配置手順 (初回セットアップ)
 

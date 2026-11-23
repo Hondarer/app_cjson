@@ -92,6 +92,7 @@ cJSON_IsTrue
 cJSON_Minify
 cJSON_Parse
 cJSON_ParseJSONCWithLength
+cJSON_ParseJSONCWithLengthOpts
 cJSON_ParseWithLength
 cJSON_ParseWithLengthOpts
 cJSON_ParseWithOpts

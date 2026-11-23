@@ -13,6 +13,8 @@ extern cJSON * mock_cjson_app_cJSON_ParseWithOpts(const char *caller_file, int c
 extern cJSON * mock_cjson_app_cJSON_ParseWithLengthOpts(const char *caller_file, int caller_line, const char *caller_function, const char *value, size_t buffer_length, const char **return_parse_end,
                 cJSON_bool require_null_terminated);
 extern cJSON * mock_cjson_app_cJSON_ParseJSONCWithLength(const char *caller_file, int caller_line, const char *caller_function, const char *value, size_t buffer_length);
+extern cJSON * mock_cjson_app_cJSON_ParseJSONCWithLengthOpts(const char *caller_file, int caller_line, const char *caller_function, const char *value, size_t buffer_length, cjson_app_jsonc_status *status,
+                size_t *error_offset);
 extern char * mock_cjson_app_cJSON_Print(const char *caller_file, int caller_line, const char *caller_function, const cJSON *item);
 extern char * mock_cjson_app_cJSON_PrintUnformatted(const char *caller_file, int caller_line, const char *caller_function, const cJSON *item);
 extern char * mock_cjson_app_cJSON_PrintBuffered(const char *caller_file, int caller_line, const char *caller_function, const cJSON *item, int prebuffer, cJSON_bool fmt);
@@ -143,6 +145,9 @@ extern void mock_cjson_app_cJSONUtils_SortObjectCaseSensitive(const char *caller
 #endif
 #ifdef cjson_app_cJSON_ParseJSONCWithLength
 #undef cjson_app_cJSON_ParseJSONCWithLength
+#endif
+#ifdef cjson_app_cJSON_ParseJSONCWithLengthOpts
+#undef cjson_app_cJSON_ParseJSONCWithLengthOpts
 #endif
 #ifdef cjson_app_cJSON_Print
 #undef cjson_app_cJSON_Print
@@ -462,6 +467,7 @@ extern void mock_cjson_app_cJSONUtils_SortObjectCaseSensitive(const char *caller
 #define cjson_app_cJSON_ParseWithOpts(mock_arg0, mock_arg1, mock_arg2) mock_cjson_app_cJSON_ParseWithOpts(__FILE__, __LINE__, __func__, mock_arg0, mock_arg1, mock_arg2)
 #define cjson_app_cJSON_ParseWithLengthOpts(mock_arg0, mock_arg1, mock_arg2, mock_arg3) mock_cjson_app_cJSON_ParseWithLengthOpts(__FILE__, __LINE__, __func__, mock_arg0, mock_arg1, mock_arg2, mock_arg3)
 #define cjson_app_cJSON_ParseJSONCWithLength(mock_arg0, mock_arg1) mock_cjson_app_cJSON_ParseJSONCWithLength(__FILE__, __LINE__, __func__, mock_arg0, mock_arg1)
+#define cjson_app_cJSON_ParseJSONCWithLengthOpts(mock_arg0, mock_arg1, mock_arg2, mock_arg3) mock_cjson_app_cJSON_ParseJSONCWithLengthOpts(__FILE__, __LINE__, __func__, mock_arg0, mock_arg1, mock_arg2, mock_arg3)
 #define cjson_app_cJSON_Print(mock_arg0) mock_cjson_app_cJSON_Print(__FILE__, __LINE__, __func__, mock_arg0)
 #define cjson_app_cJSON_PrintUnformatted(mock_arg0) mock_cjson_app_cJSON_PrintUnformatted(__FILE__, __LINE__, __func__, mock_arg0)
 #define cjson_app_cJSON_PrintBuffered(mock_arg0, mock_arg1, mock_arg2) mock_cjson_app_cJSON_PrintBuffered(__FILE__, __LINE__, __func__, mock_arg0, mock_arg1, mock_arg2)

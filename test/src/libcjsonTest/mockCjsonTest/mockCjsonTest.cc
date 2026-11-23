@@ -230,3 +230,65 @@ TEST(mockCjsonTest, overrides_jsonc_parser)
     // Assert
     EXPECT_EQ(&expected, actual); // [確認_正常系] - cjson_app_cJSON_ParseJSONCWithLength() の戻り値が &expected と一致すること。
 }
+
+// JSONC の種別付き解析が、実委譲でコメントと末尾カンマを解析することの確認
+TEST(mockCjsonTest, delegates_jsonc_parser_with_status)
+{
+    // Arrange
+    const char *source =
+        "/* header */ {\"name\":\"a,}\",}"; // [状態] - コメントと末尾カンマを含む JSONC 文字列を用意する。
+    cjson_app_jsonc_status status = CJSON_APP_JSONC_INVALID_ARGUMENT;
+    size_t offset = 7U;
+
+    // Pre-Assert
+
+    // Act
+    cJSON *root = cjson_app_cJSON_ParseJSONCWithLengthOpts(
+        source, std::strlen(source), &status,
+        &offset); // [手順] - JSONC 文字列 source を指定して cjson_app_cJSON_ParseJSONCWithLengthOpts() を呼び出す。
+
+    // Assert
+    ASSERT_NE(nullptr,
+              root); // [確認_正常系] - cjson_app_cJSON_ParseJSONCWithLengthOpts() の戻り値が nullptr 以外であること。
+    EXPECT_EQ(
+        CJSON_APP_JSONC_OK,
+        status); // [確認_正常系] - cjson_app_cJSON_ParseJSONCWithLengthOpts() が格納した status が CJSON_APP_JSONC_OK であること。
+    EXPECT_EQ(0U,
+              offset); // [確認_正常系] - cjson_app_cJSON_ParseJSONCWithLengthOpts() が格納した offset が 0 であること。
+    EXPECT_STREQ(
+        "a,}",
+        cjson_app_cJSON_GetStringValue(cjson_app_cJSON_GetObjectItemCaseSensitive(
+            root,
+            "name"))); // [確認_正常系] - "name" の項目に対する cjson_app_cJSON_GetStringValue() の戻り値が "a,}" であること。
+
+    // Cleanup
+    cjson_app_cJSON_Delete(root);
+}
+
+// JSONC の種別付き解析の結果を mock で差し替えられることの確認
+TEST(mockCjsonTest, overrides_jsonc_parser_with_status)
+{
+    // Arrange
+    NiceMock<Mock_cjson> mock_cjson;
+    cJSON expected = {};
+    const char *source = "{}"; // [状態] - 解析対象文字列と期待値を準備する。
+    cjson_app_jsonc_status status = CJSON_APP_JSONC_INVALID_ARGUMENT;
+    size_t offset = 0U;
+
+    // Pre-Assert
+    EXPECT_CALL(mock_cjson,
+                cjson_app_cJSON_ParseJSONCWithLengthOpts(_, _, _, StrEq(source), std::strlen(source), &status, &offset))
+        .WillOnce(Return(
+            &expected)); // [Pre-Assert確認_正常系] - cjson_app_cJSON_ParseJSONCWithLengthOpts() が source と等しい文字列、std::strlen() の戻り値、status、offset を指定して 1 回呼び出されること。
+    // [Pre-Assert手順] - cjson_app_cJSON_ParseJSONCWithLengthOpts() から expected のアドレスを返す。
+
+    // Act
+    cJSON *actual = cjson_app_cJSON_ParseJSONCWithLengthOpts(
+        source, std::strlen(source), &status,
+        &offset); // [手順] - mock を介して JSONC 文字列 source を指定して cjson_app_cJSON_ParseJSONCWithLengthOpts() を呼び出す。
+
+    // Assert
+    EXPECT_EQ(
+        &expected,
+        actual); // [確認_正常系] - cjson_app_cJSON_ParseJSONCWithLengthOpts() の戻り値が &expected と一致すること。
+}
