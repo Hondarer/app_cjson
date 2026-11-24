@@ -26,8 +26,9 @@ struct AllocationPlan
     size_t fail_call = 0U;
     size_t fail_size = 0U;
     size_t fail_size_count = 0U;
-    int barrier_role = 0;
     std::vector<size_t> requested_sizes;
+    int barrier_role = 0;
+    int pad = 0; // 明示的アラインメントです。0 を指定します。
 };
 
 thread_local AllocationPlan allocation_plan;
@@ -42,6 +43,7 @@ struct ParseBarrier
     bool release_first = false;
     int active_parser_allocations = 0;
     int maximum_parser_allocations = 0;
+    int pad = 0; // 明示的アラインメントです。0 を指定します。
 };
 
 std::atomic<ParseBarrier *> parse_barrier(nullptr);
@@ -161,8 +163,9 @@ void reset_allocation_plan()
 struct ParseOutcome
 {
     cJSON *root = nullptr;
-    cjson_app_jsonc_status status = CJSON_APP_JSONC_INVALID_ARGUMENT;
     size_t offset = 0U;
+    cjson_app_jsonc_status status = CJSON_APP_JSONC_INVALID_ARGUMENT;
+    int pad = 0; // 明示的アラインメントです。0 を指定します。
 };
 
 struct ThreadOutcome
