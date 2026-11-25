@@ -28,24 +28,3 @@ void *cjson_jsonc_test_allocate(size_t size)
 {
     return jsonc_hook_malloc(size);
 }
-
-int cjson_jsonc_test_parse_lock_is_available(void)
-{
-#if defined(_WIN32)
-    if (TryAcquireSRWLockExclusive(&jsonc_parse_exclusion) == 0)
-    {
-        return 0;
-    }
-    ReleaseSRWLockExclusive(&jsonc_parse_exclusion);
-#else
-    if (pthread_mutex_trylock(&jsonc_parse_exclusion) != 0)
-    {
-        return 0;
-    }
-    if (pthread_mutex_unlock(&jsonc_parse_exclusion) != 0)
-    {
-        return 0;
-    }
-#endif
-    return 1;
-}

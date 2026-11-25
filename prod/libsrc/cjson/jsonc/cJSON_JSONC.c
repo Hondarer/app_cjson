@@ -12,24 +12,15 @@
  */
 
 #include <cJSON_JSONC.h>
+#include <cjson_app_thread_local.h>
 
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_MSC_VER)
-    #define CJSON_APP_JSONC_THREAD_LOCAL __declspec(thread)
-#elif defined(__GNUC__)
-    #define CJSON_APP_JSONC_THREAD_LOCAL __thread
-#else
-    #error JSONC のスレッド ローカル記憶域は、MSVC と GCC だけを対象にします。
-#endif
-
 #if defined(_WIN32)
     #include <windows.h>
-#else
-    #include <pthread.h>
 #endif
 
 /*
@@ -59,13 +50,7 @@ _Static_assert(sizeof(jsonc_block_header) % _Alignof(max_align_t) == 0U,
 _Static_assert(sizeof(jsonc_block_header) > 0U, "JSONC の確保ヘッダーが空です");
 
 /* このスレッドで、フックが確保に失敗した回数です。解析の開始時の値と比べます。 */
-static CJSON_APP_JSONC_THREAD_LOCAL size_t jsonc_allocation_failure_count = 0U;
-
-#if defined(_WIN32)
-static SRWLOCK jsonc_parse_exclusion = SRWLOCK_INIT;
-#else
-static pthread_mutex_t jsonc_parse_exclusion = PTHREAD_MUTEX_INITIALIZER;
-#endif
+static CJSON_APP_THREAD_LOCAL size_t jsonc_allocation_failure_count = 0U;
 
 static void *CJSON_CDECL jsonc_hook_malloc(size_t size);
 static void CJSON_CDECL jsonc_hook_free(void *pointer);
@@ -76,8 +61,6 @@ __attribute__((constructor)) static void jsonc_on_load(void);
 #endif
 static size_t config_strip_comments(char *text);
 static void config_strip_trailing_commas(char *text);
-static void jsonc_parse_exclusion_acquire(void);
-static void jsonc_parse_exclusion_release(void);
 static size_t jsonc_syntax_offset(const char *normalized, const char *end, size_t buffer_length);
 
 #if defined(_WIN32)
@@ -150,10 +133,12 @@ cjson_app_cJSON_ParseJSONCWithLengthOpts(const char *value, size_t buffer_length
     }
     config_strip_trailing_commas(normalized);
 
-    jsonc_parse_exclusion_acquire();
+    /*
+     * cJSON の誤りの位置 (global_error) はパッチ 0003 でスレッド ローカルにしてあるため、
+     * ほかのスレッドの解析と並行に呼び出せる。
+     */
     end = NULL;
     result = cjson_app_cJSON_ParseWithLengthOpts(normalized, buffer_length + 1U, &end, 1);
-    jsonc_parse_exclusion_release();
 
     if (jsonc_allocation_failure_count != failure_count_at_entry)
     {
@@ -194,7 +179,7 @@ CJSON_PUBLIC(cJSON *) cjson_app_cJSON_ParseJSONCWithLength(const char *value, si
 /*
  * 確保と解放は、同じモジュールの malloc と free を呼ぶ。
  * cJSON の確保関数は呼ばない。呼ぶとフックが再入する。
- * 解析用ロックの保持中でも、ロックの再取得、JSONC の解析、利用側のコールバックは行わない。
+ * cJSON の処理の途中から呼ばれるため、JSONC の解析と利用側のコールバックは行わない。
  */
 static void *CJSON_CDECL jsonc_hook_malloc(size_t size)
 {
@@ -416,39 +401,6 @@ static void config_strip_trailing_commas(char *text)
             }
         }
     }
-}
-
-static void jsonc_parse_exclusion_acquire(void)
-{
-#if defined(_WIN32)
-    AcquireSRWLockExclusive(&jsonc_parse_exclusion);
-#else
-    /*
-     * pthread_mutex_lock() は取得できるまで戻り値 0 以外を返さないため、
-     * 失敗は呼び出し規約違反または内部状態の破損を表す。
-     * see: https://man7.org/linux/man-pages/man3/pthread_mutex_lock.3p.html
-     */
-    if (pthread_mutex_lock(&jsonc_parse_exclusion) != 0)
-    {
-        abort();
-    }
-#endif
-}
-
-static void jsonc_parse_exclusion_release(void)
-{
-#if defined(_WIN32)
-    ReleaseSRWLockExclusive(&jsonc_parse_exclusion);
-#else
-    /*
-     * pthread_mutex_unlock() が 0 以外を返すのは、呼び出し規約違反または内部状態の破損である。
-     * see: https://man7.org/linux/man-pages/man3/pthread_mutex_lock.3p.html
-     */
-    if (pthread_mutex_unlock(&jsonc_parse_exclusion) != 0)
-    {
-        abort();
-    }
-#endif
 }
 
 static size_t jsonc_syntax_offset(const char *normalized, const char *end, size_t buffer_length)

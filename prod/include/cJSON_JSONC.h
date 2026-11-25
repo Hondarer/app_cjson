@@ -51,11 +51,10 @@ extern "C"
      *
      *  @par            スレッド セーフ
      *  本関数は条件付きスレッド セーフです。\n
-     *  新旧の JSONC のラッパーを通る解析は、プロセス全体で 1 つのロックにより直列に実行します。\n
-     *  本関数自身はロックを取らず、cjson_app_cJSON_ParseJSONCWithLengthOpts() が 1 回だけ取ります。\n
-     *  cJSON を直接呼ぶ解析および cJSON_GetErrorPtr() の参照と同時に実行せず、
+     *  解析は、スレッドごとに独立した誤りの位置 (cJSON_GetErrorPtr() が返す位置) を使います。\n
+     *  このため、ほかの JSONC の解析や、cJSON を直接呼ぶ解析 (cJSON_Parse 系) と並行に実行できます。\n
      *  入力文字列を同時に変更せず、ロード後に cJSON のアロケーター フックを変更しない場合に、同時に呼び出せます。\n
-     *  struct-meta の struct_meta_json_file_load() が呼ぶ cjson_app_cJSON_Parse() は、このロックを通りません。
+     *  ロード後の cJSON_InitHooks() による解除と再差し替えは禁止します。
      */
     CJSON_PUBLIC(cJSON *) cjson_app_cJSON_ParseJSONCWithLength(const char *value, size_t buffer_length);
 
@@ -85,10 +84,10 @@ extern "C"
      *
      *  @par            スレッド セーフ
      *  本関数は条件付きスレッド セーフです。\n
-     *  新旧の JSONC のラッパーを通る解析は、プロセス全体で 1 つのロックにより直列に実行します。\n
-     *  cJSON を直接呼ぶ解析および cJSON_GetErrorPtr() の参照と同時に実行せず、
+     *  解析は、スレッドごとに独立した誤りの位置 (cJSON_GetErrorPtr() が返す位置) を使います。\n
+     *  このため、ほかの JSONC の解析や、cJSON を直接呼ぶ解析 (cJSON_Parse 系) と並行に実行できます。\n
      *  入力文字列を同時に変更せず、ロード後に cJSON のアロケーター フックを変更しない場合に、同時に呼び出せます。\n
-     *  struct-meta の struct_meta_json_file_load() が呼ぶ cjson_app_cJSON_Parse() は、このロックを通りません。\n
+     *  ロード後の cJSON_InitHooks() による解除と再差し替えは禁止します。\n
      *  status と error_offset の出力先を、ほかの呼び出しと同時に書き換えないでください。
      */
     CJSON_PUBLIC(cJSON *)
