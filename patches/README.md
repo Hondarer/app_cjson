@@ -29,10 +29,15 @@ Table: 収録パッチの一覧と適用対象および目的
 |---|---|---|
 | `0001-windows-dll-import-default.patch` | `prod/include/cJSON.h` | Windows の利用側で既定の `CJSON_IMPORT_SYMBOLS` を定義します。 |
 | `0002-exact-integer-hooks.patch` | `prod/libsrc/cjson/cJSON.c` | 正確な整数の保持と出力のフックを 5 箇所へ追加します。 |
+| `0003-thread-local-global-error.patch` | `prod/libsrc/cjson/cJSON.c` | 解析の誤りの位置 (`global_error`) をスレッド ローカルにします。 |
 
 `0002` の実装本体は `prod/libsrc/cjson/integer/` にあり、パッチ側は呼び出しだけを追加します。  
 上流バージョン更新時の追随範囲を小さく保つための分割です。  
 公開 API は `prod/include/cJSON_Integer.h`、ライブラリ内共有の宣言は `prod/include_internal/cJSON_Integer_internal.h` です。
+
+`0003` は、`prod/include_internal/cjson_app_thread_local.h` の `CJSON_APP_THREAD_LOCAL` を `global_error` に付けます。  
+これにより、`cJSON_GetErrorPtr()` は呼び出したスレッドの直近の解析の失敗位置を返し、複数のスレッドの解析を並行に実行できます。  
+`CJSON_APP_THREAD_LOCAL` は MSVC と GCC だけを対象にし、ほかの処理系ではコンパイルを停止します。
 
 ## パッチの追加と再生成
 

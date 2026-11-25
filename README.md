@@ -47,10 +47,10 @@ JSONC のコメントと末尾カンマを扱う拡張 API を `cJSON_JSONC.h` �
 cJSON が所有する領域と出力バッファーは `cjson_app_cJSON_free()` で解放します。通常の `free()` と `realloc()` は使いません。  
 通常の `malloc()` で確保した領域を、cJSON が所有する値やキーへ代入しません。参照として渡した外部所有の文字列は消去しません。
 
-新旧の JSONC の関数は、プロセス全体で 1 つの静的なロックを共有し、cJSON 本体の解析呼び出しだけを直列に実行します。ロックの生成と破棄はありません。  
-struct-meta の `struct_meta_json_file_load()` が呼ぶ `cjson_app_cJSON_Parse()` と、利用側が直接呼ぶ `cJSON_Parse` 系は、このロックを通りません。  
-それらと JSONC の解析、または直接の解析どうしを同時に実行する場合と、解析中に `cJSON_GetErrorPtr()` を参照する場合は、利用側が排他します。  
-この排他は、ロード後のフックの変更を許しません。利用側が `cJSON_InitHooks()` を呼ぶことも、同じ理由で禁止します。
+cJSON 本体の解析の誤りの位置 (`global_error`) は、パッチ `0003` によりスレッド ローカルです。  
+`cJSON_GetErrorPtr()` は、呼び出したスレッドの直近の解析の失敗位置を返します。  
+このため、JSONC の解析、利用側が直接呼ぶ `cJSON_Parse` 系、struct-meta の `struct_meta_json_file_load()` が呼ぶ `cjson_app_cJSON_Parse()` は、利用側で排他せずに並行に実行できます。  
+ただし、上記の理由により、ロード後に利用側が `cJSON_InitHooks()` でフックを変えることは禁止のままです。
 
 ```c
 #include <cJSON_JSONC.h>
@@ -64,7 +64,7 @@ cJSON *root = cjson_app_cJSON_ParseJSONCWithLengthOpts(source, strlen(source), &
 cjson_app_cJSON_Delete(root);
 ```
 
-通常の `cjson_app_cJSON_Parse()` は JSONC に変更せず、従来どおり JSON を解析します。この解析は上記のロックを通りません。
+通常の `cjson_app_cJSON_Parse()` は JSONC に変更せず、従来どおり JSON を解析します。
 
 ## パッケージの配置手順 (初回セットアップ)
 

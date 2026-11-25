@@ -34,6 +34,4 @@ ifdef PLATFORM_WINDOWS
 else
     CFLAGS += -include "$(MYAPP_DIR)/prod/include_internal/cjson_app_namespace.h"
     LDFLAGS += -Wl,-soname,libcjson_app.so
-    # JSONC の解析用ロックは libcjson_app 自身が pthread を使う。cplat はリンクしない。
-    LIBS += pthread
 endif

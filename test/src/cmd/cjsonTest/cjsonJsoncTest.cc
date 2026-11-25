@@ -38,12 +38,13 @@ struct ParseBarrier
     std::mutex mutex;
     std::condition_variable condition;
     bool first_blocked = false;
-    bool second_normalized = false;
+    bool second_parsed = false;
     bool second_parser_allocation = false;
     bool release_first = false;
+    bool first_finished = false;
+    unsigned char pad[3] = {}; // 明示的アラインメントです。0 を指定します。
     int active_parser_allocations = 0;
     int maximum_parser_allocations = 0;
-    int pad = 0; // 明示的アラインメントです。0 を指定します。
 };
 
 std::atomic<ParseBarrier *> parse_barrier(nullptr);
@@ -87,12 +88,6 @@ void *controlled_malloc(const char *file, const int line, const char *func, size
     }
 
     ParseBarrier *barrier = parse_barrier.load();
-    if ((barrier != nullptr) && (allocation_plan.call_count == 1U) && (allocation_plan.barrier_role == 2))
-    {
-        std::lock_guard<std::mutex> guard(barrier->mutex);
-        barrier->second_normalized = true;
-        barrier->condition.notify_all();
-    }
     if ((barrier != nullptr) && (allocation_plan.call_count == 2U) && (allocation_plan.barrier_role != 0))
     {
         std::unique_lock<std::mutex> guard(barrier->mutex);
@@ -229,26 +224,98 @@ std::vector<size_t> record_successful_allocations(const char *text)
     return sizes;
 }
 
-struct SerialResult
+enum class ParseApi
 {
-    bool first_blocked = false;
-    bool second_normalized = false;
-    bool mutex_busy = false;
-    bool second_did_not_enter = false;
-    int maximum_parser_allocations = 0;
-    ThreadOutcome first;
-    ThreadOutcome second;
+    jsonc_opts,
+    jsonc_legacy,
+    direct,
 };
 
-SerialResult run_serial_pair(bool first_new_api, bool second_new_api)
+struct SideOutcome
+{
+    const char *error_pointer = nullptr;
+    int value = -1;
+    cjson_app_jsonc_status status = CJSON_APP_JSONC_INVALID_ARGUMENT;
+};
+
+struct ConcurrentResult
+{
+    SideOutcome first;
+    SideOutcome second;
+    int maximum_parser_allocations = 0;
+    bool first_blocked = false;
+    bool second_parsed_while_first_blocked = false;
+    unsigned char pad[2] = {}; // 明示的アラインメントです。0 を指定します。
+};
+
+// 指定の API で解析し、結果の木を返す。直接の解析は木の有無で状態を決める。
+cJSON *parse_with_api(ParseApi api, const char *text, cjson_app_jsonc_status *status)
+{
+    cJSON *root = nullptr;
+    if (api == ParseApi::jsonc_opts)
+    {
+        root = cjson_app_cJSON_ParseJSONCWithLengthOpts(text, std::strlen(text), status, nullptr);
+    }
+    else if (api == ParseApi::jsonc_legacy)
+    {
+        root = cjson_app_cJSON_ParseJSONCWithLength(text, std::strlen(text));
+        *status = (root == nullptr) ? CJSON_APP_JSONC_SYNTAX_ERROR : CJSON_APP_JSONC_OK;
+    }
+    else
+    {
+        root = cjson_app_cJSON_Parse(text);
+        *status = (root == nullptr) ? CJSON_APP_JSONC_SYNTAX_ERROR : CJSON_APP_JSONC_OK;
+    }
+    return root;
+}
+
+// 結果の木から "v" の値を取り出して解放する。
+void summarize_side(cJSON *root, SideOutcome *outcome)
+{
+    if (root != nullptr)
+    {
+        cJSON *value = cjson_app_cJSON_GetObjectItemCaseSensitive(root, "v");
+        if (value != nullptr)
+        {
+            outcome->value = value->valueint;
+        }
+        cjson_app_cJSON_Delete(root);
+    }
+}
+
+// 直接の解析の失敗位置を、入力の先頭からの位置で返す。失敗しない入力では SIZE_MAX を返す。
+size_t direct_error_offset(const char *text)
+{
+    cJSON *root = cjson_app_cJSON_Parse(text);
+    if (root != nullptr)
+    {
+        cjson_app_cJSON_Delete(root);
+        return SIZE_MAX;
+    }
+    return text_index(text, cjson_app_cJSON_GetErrorPtr());
+}
+
+/*
+ * 先行のスレッドを cJSON 本体の中 (2 回目の確保) で止め、その間に後続のスレッドの解析を完了させる。
+ * 先行のスレッドは、再開後に解析を終えて誤りの位置を読む。
+ * 後続のスレッドは、先行のスレッドが誤りの位置を読んだ後で、自分の誤りの位置を読む。
+ * 誤りの位置がスレッド間で共有されていれば、どちらかが相手の位置を読む。
+ */
+ConcurrentResult run_concurrent_pair(ParseApi first_api, const char *first_text, ParseApi second_api,
+                                     const char *second_text)
 {
     ParseBarrier barrier;
-    SerialResult result;
+    ConcurrentResult result;
     parse_barrier.store(&barrier);
     std::thread first([&]() {
         reset_allocation_plan();
         allocation_plan.barrier_role = 1;
-        result.first = parse_value(first_new_api, "{\"v\":1}");
+        cJSON *root = parse_with_api(first_api, first_text, &result.first.status);
+        result.first.error_pointer = cjson_app_cJSON_GetErrorPtr();
+        summarize_side(root, &result.first);
+        std::lock_guard<std::mutex> guard(barrier.mutex);
+        barrier.first_finished = true;
+        barrier.condition.notify_all();
     });
 
     {
@@ -262,36 +329,35 @@ SerialResult run_serial_pair(bool first_new_api, bool second_new_api)
         std::thread second([&]() {
             reset_allocation_plan();
             allocation_plan.barrier_role = 2;
-            result.second = parse_value(second_new_api, "{\"v\":2}");
+            cJSON *root = parse_with_api(second_api, second_text, &result.second.status);
+            {
+                std::unique_lock<std::mutex> guard(barrier.mutex);
+                barrier.second_parsed = true;
+                barrier.condition.notify_all();
+                barrier.condition.wait(guard, [&barrier]() { return barrier.first_finished; });
+            }
+            result.second.error_pointer = cjson_app_cJSON_GetErrorPtr();
+            summarize_side(root, &result.second);
         });
         {
             std::unique_lock<std::mutex> guard(barrier.mutex);
-            result.second_normalized = barrier.condition.wait_for(guard, std::chrono::seconds(3), [&barrier]() {
-                return barrier.second_normalized;
-            });
-        }
-        result.mutex_busy = (cjson_jsonc_test_parse_lock_is_available() == 0);
-        {
-            std::unique_lock<std::mutex> guard(barrier.mutex);
-            barrier.condition.wait_for(guard, std::chrono::milliseconds(100), [&barrier]() {
-                return barrier.second_parser_allocation;
-            });
-            result.second_did_not_enter = !barrier.second_parser_allocation;
+            result.second_parsed_while_first_blocked = barrier.condition.wait_for(
+                guard, std::chrono::seconds(3), [&barrier]() { return barrier.second_parsed; });
             result.maximum_parser_allocations = barrier.maximum_parser_allocations;
             barrier.release_first = true;
             barrier.condition.notify_all();
         }
+        first.join();
         second.join();
     }
     else
     {
-        std::lock_guard<std::mutex> guard(barrier.mutex);
-        barrier.release_first = true;
-        barrier.condition.notify_all();
-    }
-    first.join();
-    if (!result.first_blocked)
-    {
+        {
+            std::lock_guard<std::mutex> guard(barrier.mutex);
+            barrier.release_first = true;
+            barrier.condition.notify_all();
+        }
+        first.join();
         result.maximum_parser_allocations = barrier.maximum_parser_allocations;
     }
     parse_barrier.store(nullptr);
@@ -489,37 +555,52 @@ TEST_F(cjsonJsoncTest, returns_out_of_memory_for_element_and_exact_integer)
     cjson_app_cJSON_Delete(recovered.root);
 }
 
-// 新旧の解析 API の組み合わせを同時に呼び出して排他することの確認
-TEST_F(cjsonJsoncTest, serializes_new_and_existing_parser_calls)
+// 2 つのスレッドの解析を cJSON 本体の中で重ねても、結果と誤りの位置がスレッドごとに独立していることの確認
+TEST_F(cjsonJsoncTest, parses_concurrently_with_thread_local_error_positions)
 {
     // Arrange
-    const SerialResult new_and_new = run_serial_pair(true, true);
-    const SerialResult old_and_old = run_serial_pair(false, false);
-    const SerialResult new_and_old = run_serial_pair(true, false);
+    static const char jsonc_valid[] = "{\"v\":1,}";
+    static const char jsonc_second_valid[] = "{\"v\":2}";
+    static const char direct_broken_first[] = "{\"v\":1 x}";
+    static const char direct_broken_second[] = "[2,,]";
+    const size_t first_error_offset = direct_error_offset(direct_broken_first);
+    const size_t second_error_offset = direct_error_offset(direct_broken_second);
+
+    // Pre-Assert
+    ASSERT_LT(first_error_offset, std::strlen(direct_broken_first)); // [状態確認] - 先行の入力が直接の解析で構文エラーになること。
+    ASSERT_LT(second_error_offset, std::strlen(direct_broken_second)); // [状態確認] - 後続の入力が直接の解析で構文エラーになること。
+
+    // Act
+    const ConcurrentResult jsonc_and_direct =
+        run_concurrent_pair(ParseApi::jsonc_opts, jsonc_valid, ParseApi::direct, direct_broken_second);
+    const ConcurrentResult direct_and_direct =
+        run_concurrent_pair(ParseApi::direct, direct_broken_first, ParseApi::direct, direct_broken_second);
+    const ConcurrentResult legacy_and_jsonc =
+        run_concurrent_pair(ParseApi::jsonc_legacy, jsonc_valid, ParseApi::jsonc_opts, jsonc_second_valid);
 
     // Assert
-    EXPECT_TRUE(new_and_new.first_blocked); // [確認_正常系] - 新 API の先行解析が内部確保で停止したこと。
-    EXPECT_TRUE(new_and_new.second_normalized); // [確認_正常系] - 2 つ目の新 API がロック前の正規化を終えたこと。
-    EXPECT_TRUE(new_and_new.mutex_busy); // [確認_正常系] - 先行解析の間に共通ロックを取得できないこと。
-    EXPECT_TRUE(new_and_new.second_did_not_enter); // [確認_正常系] - 先行解析中に 2 つ目が cJSON 本体へ入らないこと。
-    EXPECT_EQ(1, new_and_new.maximum_parser_allocations); // [確認_正常系] - 新 API の解析区間内の同時数が 1 であること。
-    EXPECT_EQ(CJSON_APP_JSONC_OK, new_and_new.first.status); // [確認_正常系] - 先行する新 API の解析が成功すること。
-    EXPECT_EQ(CJSON_APP_JSONC_OK, new_and_new.second.status); // [確認_正常系] - 後続の新 API の解析が成功すること。
-    EXPECT_TRUE(old_and_old.first_blocked); // [確認_正常系] - 先行する旧 API の解析が内部確保で停止したこと。
-    EXPECT_TRUE(old_and_old.mutex_busy); // [確認_正常系] - 旧 API の解析も共通ロックを取得すること。
-    EXPECT_TRUE(old_and_old.second_did_not_enter); // [確認_正常系] - 先行解析中に 2 つ目が cJSON 本体へ入らないこと。
-    EXPECT_EQ(1, old_and_old.maximum_parser_allocations); // [確認_正常系] - 旧 API の解析区間内の同時数が 1 であること。
-    EXPECT_TRUE(new_and_old.first_blocked); // [確認_正常系] - 新 API の解析が内部確保で停止したこと。
-    EXPECT_TRUE(new_and_old.mutex_busy); // [確認_正常系] - 新旧 API が同じロックを使うこと。
-    EXPECT_TRUE(new_and_old.second_did_not_enter); // [確認_正常系] - 先行解析中に旧 API が cJSON 本体へ入らないこと。
-    EXPECT_EQ(1, new_and_old.maximum_parser_allocations); // [確認_正常系] - 新旧混在時の解析区間内の同時数が 1 であること。
-    EXPECT_EQ(1, new_and_new.first.value); // [確認_正常系] - 先行する解析の値が保たれること。
-    EXPECT_EQ(2, new_and_new.second.value); // [確認_正常系] - 後続する解析の値が保たれること。
-    EXPECT_EQ(1, old_and_old.first.value); // [確認_正常系] - 旧 API の先行解析の値が保たれること。
-    EXPECT_EQ(2, old_and_old.second.value); // [確認_正常系] - 旧 API の後続解析の値が保たれること。
-    EXPECT_EQ(1, new_and_old.first.value); // [確認_正常系] - 新 API の値が保たれること。
-    EXPECT_EQ(2, new_and_old.second.value); // [確認_正常系] - 旧 API の値が保たれること。
-    EXPECT_EQ(1, cjson_jsonc_test_parse_lock_is_available()); // [確認_正常系] - すべての解析後にロックを取得できること。
+    EXPECT_TRUE(jsonc_and_direct.first_blocked); // [確認_正常系] - JSONC の解析が cJSON 本体の中の確保で止まったこと。
+    EXPECT_TRUE(jsonc_and_direct.second_parsed_while_first_blocked); // [確認_正常系] - 先行の解析の途中で、後続の直接の解析が完了すること。
+    EXPECT_EQ(2, jsonc_and_direct.maximum_parser_allocations); // [確認_正常系] - 2 つの解析が cJSON 本体の中で重なったこと。
+    EXPECT_EQ(CJSON_APP_JSONC_OK, jsonc_and_direct.first.status); // [確認_正常系] - JSONC の解析が成功すること。
+    EXPECT_EQ(1, jsonc_and_direct.first.value); // [確認_正常系] - JSONC の解析の値が保たれること。
+    EXPECT_EQ(nullptr, jsonc_and_direct.first.error_pointer); // [確認_正常系] - 後続の失敗の位置が、成功したスレッドに見えないこと。
+    EXPECT_EQ(CJSON_APP_JSONC_SYNTAX_ERROR, jsonc_and_direct.second.status); // [確認_異常系] - 直接の解析が構文エラーになること。
+    EXPECT_EQ(direct_broken_second + second_error_offset, jsonc_and_direct.second.error_pointer); // [確認_異常系] - 失敗したスレッドが自分の入力の位置を読むこと。
+    EXPECT_TRUE(direct_and_direct.first_blocked); // [確認_正常系] - 先行の直接の解析が cJSON 本体の中の確保で止まったこと。
+    EXPECT_TRUE(direct_and_direct.second_parsed_while_first_blocked); // [確認_正常系] - 先行の解析の途中で、後続の直接の解析が完了すること。
+    EXPECT_EQ(2, direct_and_direct.maximum_parser_allocations); // [確認_正常系] - 2 つの直接の解析が cJSON 本体の中で重なったこと。
+    EXPECT_EQ(CJSON_APP_JSONC_SYNTAX_ERROR, direct_and_direct.first.status); // [確認_異常系] - 先行の直接の解析が構文エラーになること。
+    EXPECT_EQ(direct_broken_first + first_error_offset, direct_and_direct.first.error_pointer); // [確認_異常系] - 先行のスレッドが自分の入力の位置を読むこと。
+    EXPECT_EQ(CJSON_APP_JSONC_SYNTAX_ERROR, direct_and_direct.second.status); // [確認_異常系] - 後続の直接の解析が構文エラーになること。
+    EXPECT_EQ(direct_broken_second + second_error_offset, direct_and_direct.second.error_pointer); // [確認_異常系] - 先行の失敗の後でも、後続のスレッドが自分の入力の位置を読むこと。
+    EXPECT_TRUE(legacy_and_jsonc.first_blocked); // [確認_正常系] - 旧 API の解析が cJSON 本体の中の確保で止まったこと。
+    EXPECT_TRUE(legacy_and_jsonc.second_parsed_while_first_blocked); // [確認_正常系] - 旧 API の解析の途中で、新 API の解析が完了すること。
+    EXPECT_EQ(2, legacy_and_jsonc.maximum_parser_allocations); // [確認_正常系] - 新旧の JSONC の解析が cJSON 本体の中で重なったこと。
+    EXPECT_EQ(CJSON_APP_JSONC_OK, legacy_and_jsonc.first.status); // [確認_正常系] - 旧 API の解析が成功すること。
+    EXPECT_EQ(1, legacy_and_jsonc.first.value); // [確認_正常系] - 旧 API の解析の値が保たれること。
+    EXPECT_EQ(CJSON_APP_JSONC_OK, legacy_and_jsonc.second.status); // [確認_正常系] - 新 API の解析が成功すること。
+    EXPECT_EQ(2, legacy_and_jsonc.second.value); // [確認_正常系] - 新 API の解析の値が保たれること。
 }
 
 // 各スレッドの失敗回数が独立していることの確認
@@ -570,7 +651,6 @@ TEST_F(cjsonJsoncTest, recovers_after_syntax_and_allocation_errors)
     EXPECT_EQ(CJSON_APP_JSONC_OUT_OF_MEMORY, allocation.status); // [確認_異常系] - 確保失敗をメモリ不足として返したこと。
     ASSERT_NE(nullptr, recovered.root); // [確認_正常系] - エラーの後に次の解析が完了すること。
     EXPECT_EQ(1, recovered.root->child->valueint); // [確認_正常系] - 回復後の解析値が正しいこと。
-    EXPECT_EQ(1, cjson_jsonc_test_parse_lock_is_available()); // [確認_正常系] - エラー経路の後もロックが解放されていること。
 
     // Cleanup
     cjson_app_cJSON_Delete(recovered.root);
