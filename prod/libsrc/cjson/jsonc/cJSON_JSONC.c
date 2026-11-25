@@ -67,6 +67,130 @@ static SRWLOCK jsonc_parse_exclusion = SRWLOCK_INIT;
 static pthread_mutex_t jsonc_parse_exclusion = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
+static void *CJSON_CDECL jsonc_hook_malloc(size_t size);
+static void CJSON_CDECL jsonc_hook_free(void *pointer);
+static void jsonc_install_allocation_hooks(void);
+#if defined(_WIN32)
+#else
+__attribute__((constructor)) static void jsonc_on_load(void);
+#endif
+static size_t config_strip_comments(char *text);
+static void config_strip_trailing_commas(char *text);
+static void jsonc_parse_exclusion_acquire(void);
+static void jsonc_parse_exclusion_release(void);
+static size_t jsonc_syntax_offset(const char *normalized, const char *end, size_t buffer_length);
+
+#if defined(_WIN32)
+/*
+ * DllMain では cJSON_InitHooks() の代入だけを行う。
+ * 確保、同期、LoadLibrary は呼ばない。
+ * see: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-best-practices
+ *
+ * DLL_PROCESS_ATTACH では、フック関数の設定だけを行う。
+ * see: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-entry-point-function
+ */
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
+{
+    (void)instance;
+    (void)reserved;
+    if (reason == DLL_PROCESS_ATTACH)
+    {
+        jsonc_install_allocation_hooks();
+    }
+    return TRUE;
+}
+#endif
+
+/* Doxygen コメントは、ヘッダーに記載 */
+CJSON_PUBLIC(cJSON *)
+cjson_app_cJSON_ParseJSONCWithLengthOpts(const char *value, size_t buffer_length, cjson_app_jsonc_status *status,
+                                         size_t *error_offset)
+{
+    char *normalized;
+    cJSON *result;
+    const char *end;
+    size_t failure_count_at_entry;
+    size_t unclosed_offset;
+    size_t offset;
+
+    if (error_offset != NULL)
+    {
+        *error_offset = 0U;
+    }
+    if (status == NULL)
+    {
+        return NULL;
+    }
+    if (value == NULL || buffer_length == SIZE_MAX || memchr(value, '\0', buffer_length) != NULL)
+    {
+        *status = CJSON_APP_JSONC_INVALID_ARGUMENT;
+        return NULL;
+    }
+
+    failure_count_at_entry = jsonc_allocation_failure_count;
+    normalized = (char *)cjson_app_cJSON_malloc(buffer_length + 1U);
+    if (normalized == NULL)
+    {
+        *status = CJSON_APP_JSONC_OUT_OF_MEMORY;
+        return NULL;
+    }
+    memcpy(normalized, value, buffer_length);
+    normalized[buffer_length] = '\0';
+
+    unclosed_offset = config_strip_comments(normalized);
+    if (unclosed_offset != SIZE_MAX)
+    {
+        if (error_offset != NULL)
+        {
+            *error_offset = unclosed_offset;
+        }
+        cjson_app_cJSON_free(normalized);
+        *status = CJSON_APP_JSONC_SYNTAX_ERROR;
+        return NULL;
+    }
+    config_strip_trailing_commas(normalized);
+
+    jsonc_parse_exclusion_acquire();
+    end = NULL;
+    result = cjson_app_cJSON_ParseWithLengthOpts(normalized, buffer_length + 1U, &end, 1);
+    jsonc_parse_exclusion_release();
+
+    if (jsonc_allocation_failure_count != failure_count_at_entry)
+    {
+        if (result != NULL)
+        {
+            cjson_app_cJSON_Delete(result);
+        }
+        cjson_app_cJSON_free(normalized);
+        *status = CJSON_APP_JSONC_OUT_OF_MEMORY;
+        return NULL;
+    }
+    if (result == NULL)
+    {
+        offset = jsonc_syntax_offset(normalized, end, buffer_length);
+        cjson_app_cJSON_free(normalized);
+        if (error_offset != NULL)
+        {
+            *error_offset = offset;
+        }
+        *status = CJSON_APP_JSONC_SYNTAX_ERROR;
+        return NULL;
+    }
+
+    cjson_app_cJSON_free(normalized);
+    *status = CJSON_APP_JSONC_OK;
+    return result;
+}
+
+/* Doxygen コメントは、ヘッダーに記載 */
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_ParseJSONCWithLength(const char *value, size_t buffer_length)
+{
+    cjson_app_jsonc_status status;
+
+    status = CJSON_APP_JSONC_INVALID_ARGUMENT;
+    return cjson_app_cJSON_ParseJSONCWithLengthOpts(value, buffer_length, &status, NULL);
+}
+
 /*
  * 確保と解放は、同じモジュールの malloc と free を呼ぶ。
  * cJSON の確保関数は呼ばない。呼ぶとフックが再入する。
@@ -150,24 +274,6 @@ static void jsonc_install_allocation_hooks(void)
 }
 
 #if defined(_WIN32)
-/*
- * DllMain では cJSON_InitHooks() の代入だけを行う。
- * 確保、同期、LoadLibrary は呼ばない。
- * see: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-best-practices
- *
- * DLL_PROCESS_ATTACH では、フック関数の設定だけを行う。
- * see: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-entry-point-function
- */
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
-{
-    (void)instance;
-    (void)reserved;
-    if (reason == DLL_PROCESS_ATTACH)
-    {
-        jsonc_install_allocation_hooks();
-    }
-    return TRUE;
-}
 #else
 /*
  * 依存される共有ライブラリの初期化は、依存する側より前に動く。
@@ -359,95 +465,5 @@ static size_t jsonc_syntax_offset(const char *normalized, const char *end, size_
         return buffer_length;
     }
     return raw;
-}
-
-/* Doxygen コメントは、ヘッダーに記載 */
-CJSON_PUBLIC(cJSON *)
-cjson_app_cJSON_ParseJSONCWithLengthOpts(const char *value, size_t buffer_length, cjson_app_jsonc_status *status,
-                                         size_t *error_offset)
-{
-    char *normalized;
-    cJSON *result;
-    const char *end;
-    size_t failure_count_at_entry;
-    size_t unclosed_offset;
-    size_t offset;
-
-    if (error_offset != NULL)
-    {
-        *error_offset = 0U;
-    }
-    if (status == NULL)
-    {
-        return NULL;
-    }
-    if (value == NULL || buffer_length == SIZE_MAX || memchr(value, '\0', buffer_length) != NULL)
-    {
-        *status = CJSON_APP_JSONC_INVALID_ARGUMENT;
-        return NULL;
-    }
-
-    failure_count_at_entry = jsonc_allocation_failure_count;
-    normalized = (char *)cjson_app_cJSON_malloc(buffer_length + 1U);
-    if (normalized == NULL)
-    {
-        *status = CJSON_APP_JSONC_OUT_OF_MEMORY;
-        return NULL;
-    }
-    memcpy(normalized, value, buffer_length);
-    normalized[buffer_length] = '\0';
-
-    unclosed_offset = config_strip_comments(normalized);
-    if (unclosed_offset != SIZE_MAX)
-    {
-        if (error_offset != NULL)
-        {
-            *error_offset = unclosed_offset;
-        }
-        cjson_app_cJSON_free(normalized);
-        *status = CJSON_APP_JSONC_SYNTAX_ERROR;
-        return NULL;
-    }
-    config_strip_trailing_commas(normalized);
-
-    jsonc_parse_exclusion_acquire();
-    end = NULL;
-    result = cjson_app_cJSON_ParseWithLengthOpts(normalized, buffer_length + 1U, &end, 1);
-    jsonc_parse_exclusion_release();
-
-    if (jsonc_allocation_failure_count != failure_count_at_entry)
-    {
-        if (result != NULL)
-        {
-            cjson_app_cJSON_Delete(result);
-        }
-        cjson_app_cJSON_free(normalized);
-        *status = CJSON_APP_JSONC_OUT_OF_MEMORY;
-        return NULL;
-    }
-    if (result == NULL)
-    {
-        offset = jsonc_syntax_offset(normalized, end, buffer_length);
-        cjson_app_cJSON_free(normalized);
-        if (error_offset != NULL)
-        {
-            *error_offset = offset;
-        }
-        *status = CJSON_APP_JSONC_SYNTAX_ERROR;
-        return NULL;
-    }
-
-    cjson_app_cJSON_free(normalized);
-    *status = CJSON_APP_JSONC_OK;
-    return result;
-}
-
-/* Doxygen コメントは、ヘッダーに記載 */
-CJSON_PUBLIC(cJSON *) cjson_app_cJSON_ParseJSONCWithLength(const char *value, size_t buffer_length)
-{
-    cjson_app_jsonc_status status;
-
-    status = CJSON_APP_JSONC_INVALID_ARGUMENT;
-    return cjson_app_cJSON_ParseJSONCWithLengthOpts(value, buffer_length, &status, NULL);
 }
 

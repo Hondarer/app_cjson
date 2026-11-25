@@ -34,6 +34,15 @@
    配列境界には整数定数式が必要なため、static const ではなくマクロで表す。 */
 #define DECIMAL_TEXT_BUFFER_SIZE 32
 
+static cJSON_bool is_plain_integer_token(const char *token, const size_t length, cJSON_bool *negative_out);
+static cJSON *create_signed_integer(const int64_t value);
+static cJSON *create_unsigned_integer(const uint64_t value);
+static cJSON_bool try_get_signed(const cJSON *item, int64_t *value_out);
+static cJSON_bool try_get_unsigned(const cJSON *item, uint64_t *value_out);
+static cJSON_bool get_signed_ranged(const cJSON *item, const int64_t min_value, const int64_t max_value,
+                                    int64_t *value_out);
+static cJSON_bool get_unsigned_ranged(const cJSON *item, const uint64_t max_value, uint64_t *value_out);
+
 /* int64_t の表現範囲の上限を 1 超えた値 (2^63)。double として正確に表現できるため、
    これを「含まない上限」として使うと、直後の (int64_t) キャストが未定義動作にならない
    ことを保証できる。 */
@@ -41,46 +50,6 @@ static const double s_int64_upper_exclusive = 9223372036854775808.0;
 
 /* uint64_t の表現範囲の上限を 1 超えた値 (2^64)。考え方は s_int64_upper_exclusive と同じ。 */
 static const double s_uint64_upper_exclusive = 18446744073709551616.0;
-
-/**
- *  @brief          トークンが `-?[0-9]+` に完全一致するかを判定します。
- *
- *  小数点、指数、符号の `+`、空白を含むトークン、`-` だけのトークン、空のトークンは
- *  すべて偽になります。呼び出し元は @p negative_out に非 NULL を渡します。
- */
-static cJSON_bool is_plain_integer_token(const char *token, const size_t length, cJSON_bool *negative_out)
-{
-    if ((token == NULL) || (length == 0U))
-    {
-        return false;
-    }
-
-    cJSON_bool negative = false;
-    size_t pos = 0U;
-
-    if (token[0] == '-')
-    {
-        negative = true;
-        pos = 1U;
-    }
-
-    if (pos >= length)
-    {
-        /* "-" だけ、または空のトークン */
-        return false;
-    }
-
-    for (; pos < length; pos++)
-    {
-        if ((token[pos] < '0') || (token[pos] > '9'))
-        {
-            return false;
-        }
-    }
-
-    *negative_out = negative;
-    return true;
-}
 
 cJSON_bool cjson_internal_integer_store_text(cJSON *item, const char *token, const size_t length)
 {
@@ -225,6 +194,211 @@ void cjson_internal_integer_clear(cJSON *item)
         cjson_app_cJSON_free(item->valuestring);
         item->valuestring = NULL;
     }
+}
+
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_HasExactInteger(const cJSON *item)
+{
+    return (cJSON_bool)(cjson_internal_integer_text(item) != NULL);
+}
+
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt8(const int8_t value)
+{
+    return create_signed_integer((int64_t)value);
+}
+
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt8(const uint8_t value)
+{
+    return create_unsigned_integer((uint64_t)value);
+}
+
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt16(const int16_t value)
+{
+    return create_signed_integer((int64_t)value);
+}
+
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt16(const uint16_t value)
+{
+    return create_unsigned_integer((uint64_t)value);
+}
+
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt32(const int32_t value)
+{
+    return create_signed_integer((int64_t)value);
+}
+
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt32(const uint32_t value)
+{
+    return create_unsigned_integer((uint64_t)value);
+}
+
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt64(const int64_t value)
+{
+    return create_signed_integer(value);
+}
+
+CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt64(const uint64_t value)
+{
+    return create_unsigned_integer(value);
+}
+
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt8Value(const cJSON *item, int8_t *value_out)
+{
+    int64_t value;
+
+    if (!get_signed_ranged(item, INT8_MIN, INT8_MAX, &value))
+    {
+        return false;
+    }
+    if (value_out != NULL)
+    {
+        *value_out = (int8_t)value;
+    }
+    return true;
+}
+
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt8Value(const cJSON *item, uint8_t *value_out)
+{
+    uint64_t value;
+
+    if (!get_unsigned_ranged(item, UINT8_MAX, &value))
+    {
+        return false;
+    }
+    if (value_out != NULL)
+    {
+        *value_out = (uint8_t)value;
+    }
+    return true;
+}
+
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt16Value(const cJSON *item, int16_t *value_out)
+{
+    int64_t value;
+
+    if (!get_signed_ranged(item, INT16_MIN, INT16_MAX, &value))
+    {
+        return false;
+    }
+    if (value_out != NULL)
+    {
+        *value_out = (int16_t)value;
+    }
+    return true;
+}
+
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt16Value(const cJSON *item, uint16_t *value_out)
+{
+    uint64_t value;
+
+    if (!get_unsigned_ranged(item, UINT16_MAX, &value))
+    {
+        return false;
+    }
+    if (value_out != NULL)
+    {
+        *value_out = (uint16_t)value;
+    }
+    return true;
+}
+
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt32Value(const cJSON *item, int32_t *value_out)
+{
+    int64_t value;
+
+    if (!get_signed_ranged(item, INT32_MIN, INT32_MAX, &value))
+    {
+        return false;
+    }
+    if (value_out != NULL)
+    {
+        *value_out = (int32_t)value;
+    }
+    return true;
+}
+
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt32Value(const cJSON *item, uint32_t *value_out)
+{
+    uint64_t value;
+
+    if (!get_unsigned_ranged(item, UINT32_MAX, &value))
+    {
+        return false;
+    }
+    if (value_out != NULL)
+    {
+        *value_out = (uint32_t)value;
+    }
+    return true;
+}
+
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt64Value(const cJSON *item, int64_t *value_out)
+{
+    int64_t value;
+
+    if (!get_signed_ranged(item, INT64_MIN, INT64_MAX, &value))
+    {
+        return false;
+    }
+    if (value_out != NULL)
+    {
+        *value_out = value;
+    }
+    return true;
+}
+
+CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt64Value(const cJSON *item, uint64_t *value_out)
+{
+    uint64_t value;
+
+    if (!get_unsigned_ranged(item, UINT64_MAX, &value))
+    {
+        return false;
+    }
+    if (value_out != NULL)
+    {
+        *value_out = value;
+    }
+    return true;
+}
+
+/**
+ *  @brief          トークンが `-?[0-9]+` に完全一致するかを判定します。
+ *
+ *  小数点、指数、符号の `+`、空白を含むトークン、`-` だけのトークン、空のトークンは
+ *  すべて偽になります。呼び出し元は @p negative_out に非 NULL を渡します。
+ */
+static cJSON_bool is_plain_integer_token(const char *token, const size_t length, cJSON_bool *negative_out)
+{
+    if ((token == NULL) || (length == 0U))
+    {
+        return false;
+    }
+
+    cJSON_bool negative = false;
+    size_t pos = 0U;
+
+    if (token[0] == '-')
+    {
+        negative = true;
+        pos = 1U;
+    }
+
+    if (pos >= length)
+    {
+        /* "-" だけ、または空のトークン */
+        return false;
+    }
+
+    for (; pos < length; pos++)
+    {
+        if ((token[pos] < '0') || (token[pos] > '9'))
+        {
+            return false;
+        }
+    }
+
+    *negative_out = negative;
+    return true;
 }
 
 /**
@@ -419,170 +593,5 @@ static cJSON_bool get_unsigned_ranged(const cJSON *item, const uint64_t max_valu
     }
 
     *value_out = value;
-    return true;
-}
-
-CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_HasExactInteger(const cJSON *item)
-{
-    return (cJSON_bool)(cjson_internal_integer_text(item) != NULL);
-}
-
-CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt8(const int8_t value)
-{
-    return create_signed_integer((int64_t)value);
-}
-
-CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt8(const uint8_t value)
-{
-    return create_unsigned_integer((uint64_t)value);
-}
-
-CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt16(const int16_t value)
-{
-    return create_signed_integer((int64_t)value);
-}
-
-CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt16(const uint16_t value)
-{
-    return create_unsigned_integer((uint64_t)value);
-}
-
-CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt32(const int32_t value)
-{
-    return create_signed_integer((int64_t)value);
-}
-
-CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt32(const uint32_t value)
-{
-    return create_unsigned_integer((uint64_t)value);
-}
-
-CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateInt64(const int64_t value)
-{
-    return create_signed_integer(value);
-}
-
-CJSON_PUBLIC(cJSON *) cjson_app_cJSON_CreateUInt64(const uint64_t value)
-{
-    return create_unsigned_integer(value);
-}
-
-CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt8Value(const cJSON *item, int8_t *value_out)
-{
-    int64_t value;
-
-    if (!get_signed_ranged(item, INT8_MIN, INT8_MAX, &value))
-    {
-        return false;
-    }
-    if (value_out != NULL)
-    {
-        *value_out = (int8_t)value;
-    }
-    return true;
-}
-
-CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt8Value(const cJSON *item, uint8_t *value_out)
-{
-    uint64_t value;
-
-    if (!get_unsigned_ranged(item, UINT8_MAX, &value))
-    {
-        return false;
-    }
-    if (value_out != NULL)
-    {
-        *value_out = (uint8_t)value;
-    }
-    return true;
-}
-
-CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt16Value(const cJSON *item, int16_t *value_out)
-{
-    int64_t value;
-
-    if (!get_signed_ranged(item, INT16_MIN, INT16_MAX, &value))
-    {
-        return false;
-    }
-    if (value_out != NULL)
-    {
-        *value_out = (int16_t)value;
-    }
-    return true;
-}
-
-CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt16Value(const cJSON *item, uint16_t *value_out)
-{
-    uint64_t value;
-
-    if (!get_unsigned_ranged(item, UINT16_MAX, &value))
-    {
-        return false;
-    }
-    if (value_out != NULL)
-    {
-        *value_out = (uint16_t)value;
-    }
-    return true;
-}
-
-CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt32Value(const cJSON *item, int32_t *value_out)
-{
-    int64_t value;
-
-    if (!get_signed_ranged(item, INT32_MIN, INT32_MAX, &value))
-    {
-        return false;
-    }
-    if (value_out != NULL)
-    {
-        *value_out = (int32_t)value;
-    }
-    return true;
-}
-
-CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt32Value(const cJSON *item, uint32_t *value_out)
-{
-    uint64_t value;
-
-    if (!get_unsigned_ranged(item, UINT32_MAX, &value))
-    {
-        return false;
-    }
-    if (value_out != NULL)
-    {
-        *value_out = (uint32_t)value;
-    }
-    return true;
-}
-
-CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetInt64Value(const cJSON *item, int64_t *value_out)
-{
-    int64_t value;
-
-    if (!get_signed_ranged(item, INT64_MIN, INT64_MAX, &value))
-    {
-        return false;
-    }
-    if (value_out != NULL)
-    {
-        *value_out = value;
-    }
-    return true;
-}
-
-CJSON_PUBLIC(cJSON_bool) cjson_app_cJSON_GetUInt64Value(const cJSON *item, uint64_t *value_out)
-{
-    uint64_t value;
-
-    if (!get_unsigned_ranged(item, UINT64_MAX, &value))
-    {
-        return false;
-    }
-    if (value_out != NULL)
-    {
-        *value_out = value;
-    }
     return true;
 }
