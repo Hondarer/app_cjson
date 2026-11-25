@@ -23,12 +23,12 @@ cJSON 本体へ手を入れる唯一の方法は、このディレクトリへ�
 
 ## 収録しているパッチ
 
+Table: 収録パッチの一覧と適用対象および目的
+
 | ファイル | 対象 | 目的 |
 |---|---|---|
 | `0001-windows-dll-import-default.patch` | `prod/include/cJSON.h` | Windows の利用側で既定の `CJSON_IMPORT_SYMBOLS` を定義します。 |
 | `0002-exact-integer-hooks.patch` | `prod/libsrc/cjson/cJSON.c` | 正確な整数の保持と出力のフックを 5 箇所へ追加します。 |
-
-Table: 収録パッチの一覧と適用対象および目的
 
 `0002` の実装本体は `prod/libsrc/cjson/integer/` にあり、パッチ側は呼び出しだけを追加します。  
 上流バージョン更新時の追随範囲を小さく保つための分割です。  
