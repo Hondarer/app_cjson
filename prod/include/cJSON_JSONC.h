@@ -15,6 +15,7 @@
 #define CJSON_JSONC_H
 
 #include <cJSON.h>
+#include <cJSON_PatchCheck.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -54,8 +55,8 @@ extern "C"
      *  解析は、スレッドごとに独立した誤りの位置 (cJSON_GetErrorPtr() が返す位置) を使います。\n
      *  このため、ほかの JSONC の解析や、cJSON を直接呼ぶ解析 (cJSON_Parse 系) と並行に実行できます。\n
      *  この並行実行は、libcjson_app が同梱の cJSON 本体へ独自のパッチ (patches/0003-thread-local-global-error.patch) を当て、
-     *  誤りの位置をスレッド ローカルにしていることに依存します。パッチを当てていない cJSON (上流の配布物やシステムの cJSON) と
-     *  組み合わせた場合は成り立ちません。\n
+     *  誤りの位置をスレッド ローカルにしていることに依存します。パッチの適用は cJSON_PatchCheck.h によりビルド時に検査され、
+     *  パッチを当てていない cJSON (上流の配布物やシステムの cJSON) のヘッダーと組み合わせた場合はコンパイル エラーになります。\n
      *  入力文字列を同時に変更せず、ロード後に cJSON のアロケーター フックを変更しない場合に、同時に呼び出せます。\n
      *  ロード後の cJSON_InitHooks() による解除と再差し替えは禁止します。
      */
@@ -90,8 +91,8 @@ extern "C"
      *  解析は、スレッドごとに独立した誤りの位置 (cJSON_GetErrorPtr() が返す位置) を使います。\n
      *  このため、ほかの JSONC の解析や、cJSON を直接呼ぶ解析 (cJSON_Parse 系) と並行に実行できます。\n
      *  この並行実行は、libcjson_app が同梱の cJSON 本体へ独自のパッチ (patches/0003-thread-local-global-error.patch) を当て、
-     *  誤りの位置をスレッド ローカルにしていることに依存します。パッチを当てていない cJSON (上流の配布物やシステムの cJSON) と
-     *  組み合わせた場合は成り立ちません。\n
+     *  誤りの位置をスレッド ローカルにしていることに依存します。パッチの適用は cJSON_PatchCheck.h によりビルド時に検査され、
+     *  パッチを当てていない cJSON (上流の配布物やシステムの cJSON) のヘッダーと組み合わせた場合はコンパイル エラーになります。\n
      *  入力文字列を同時に変更せず、ロード後に cJSON のアロケーター フックを変更しない場合に、同時に呼び出せます。\n
      *  ロード後の cJSON_InitHooks() による解除と再差し替えは禁止します。\n
      *  status と error_offset の出力先を、ほかの呼び出しと同時に書き換えないでください。

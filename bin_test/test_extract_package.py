@@ -24,6 +24,7 @@ class ExtractPackageTest(unittest.TestCase):
         (self.app / "prod/include").mkdir()
         shutil.copyfile(APP / "prod/include/cJSON_Integer.h", self.app / "prod/include/cJSON_Integer.h")
         shutil.copyfile(APP / "prod/include/cJSON_JSONC.h", self.app / "prod/include/cJSON_JSONC.h")
+        shutil.copyfile(APP / "prod/include/cJSON_PatchCheck.h", self.app / "prod/include/cJSON_PatchCheck.h")
 
     def run_extract(self):
         return subprocess.run(
@@ -32,7 +33,10 @@ class ExtractPackageTest(unittest.TestCase):
             capture_output=True, text=True, encoding="utf-8", check=False)
 
     def test_first_party_headers_are_not_rewritten(self):
-        headers = [self.app / "prod/include" / name for name in ("cJSON_Integer.h", "cJSON_JSONC.h")]
+        headers = [
+            self.app / "prod/include" / name
+            for name in ("cJSON_Integer.h", "cJSON_JSONC.h", "cJSON_PatchCheck.h")
+        ]
         originals = {path.name: (APP / "prod/include" / path.name).read_bytes() for path in headers}
         result = self.run_extract()
         self.assertEqual(0, result.returncode, result.stderr)
@@ -70,6 +74,16 @@ class ExtractPackageTest(unittest.TestCase):
         result = self.run_extract()
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertTrue(namespace.is_file())
+
+
+    def test_patch_0003_marker_is_defined(self):
+        result = self.run_extract()
+        self.assertEqual(0, result.returncode, result.stderr)
+        header = self.app / "prod/include/cJSON.h"
+        self.assertIn(
+            "#define CJSON_APP_PATCH_THREAD_LOCAL_GLOBAL_ERROR 1",
+            header.read_text(encoding="utf-8"),
+        )
 
 
 if __name__ == "__main__":

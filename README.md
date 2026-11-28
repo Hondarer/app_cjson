@@ -50,6 +50,7 @@ cJSON が所有する領域と出力バッファーは `cjson_app_cJSON_free()` 
 cJSON 本体の解析の誤りの位置 (`global_error`) は、パッチ `0003` によりスレッド ローカルです。  
 `cJSON_GetErrorPtr()` は、呼び出したスレッドの直近の解析の失敗位置を返します。  
 このため、JSONC の解析、利用側が直接呼ぶ `cJSON_Parse` 系、struct-meta の `struct_meta_json_file_load()` が呼ぶ `cjson_app_cJSON_Parse()` は、利用側で排他せずに並行に実行できます。  
+パッチ `0003` の適用は `cJSON_PatchCheck.h` によりビルド時に検査され、パッチ未適用の `cJSON.h` ではコンパイルが失敗します。  
 ただし、上記の理由により、ロード後に利用側が `cJSON_InitHooks()` でフックを変えることは禁止のままです。
 
 ```c

@@ -1,4 +1,5 @@
 #include <cJSON.h>
+#include <cJSON_PatchCheck.h>
 
 const char *namespace_test_cpp_caller_file()
 {

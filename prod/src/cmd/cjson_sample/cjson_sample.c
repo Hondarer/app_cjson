@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 #include <cJSON.h>
+#include <cJSON_PatchCheck.h>
 
 /**
  *  @brief          プログラムのエントリ ポイント。

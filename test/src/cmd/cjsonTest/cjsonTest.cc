@@ -1,6 +1,7 @@
 #include <testfw.h>
 
 #include <cJSON.h>
+#include <cJSON_PatchCheck.h>
 #include <cJSON_Utils.h>
 
 class cjsonTest : public Test

@@ -1,11 +1,11 @@
 <!--
 生成元: agree-before-implement スキル
 文書種別: 残課題一覧 (backlog)
-最終更新日時: 2026-11-26 05:27:27 JST
-最終更新エージェント: claude code / セッション ID: session_01KJc53UFydnbt2gLXTJC1ZC
+最終更新日時: 2026-11-28 18:08:00 JST
+最終更新エージェント: agy / セッション ID: f1717ab7-aaa3-487b-8275-84c421514770
 稼働 OS: Linux (WSL)
 上流文書: 継続作業 `261125-consumable-backlog-items` の `../../../../general/docs/prompts/current/261125-consumable-backlog-items-overview.md` (全体管理文書)、`../../../../general/docs/prompts/current/261125-consumable-backlog-items-design.md` (最終仕様)、`../../../../general/docs/prompts/current/261125-consumable-backlog-items-lightadr.md` (簡易 ADR)。この残課題は、その案件の統合の単位 U3 (BL-012) の作業中に摘出しました。いずれも削除されている場合があります。
-下流文書: この残課題一覧を対策する継続作業が開始された場合は、その全体管理文書・検討用 Markdown・最終仕様・残課題一覧のパスを追記します。未作成の場合や、削除されている場合があります。
+下流文書: 継続作業 `261128-cjson-patch-marker` の `261128-cjson-patch-marker-overview.md` (全体管理文書)、`261128-cjson-patch-marker-discussion.md` (検討用 Markdown)、`261128-cjson-patch-marker-lightadr.md` (簡易 ADR)、`261128-cjson-patch-marker-design.md` (最終仕様)、`261128-cjson-patch-marker-backlog.md` (残課題一覧)。未作成の場合や、削除されている場合があります。
 再開手順: このファイルを開いたエージェントは、作業の前に agree-before-implement スキルを読み込んでください。「整理状態」が「随時追記中」であれば、案件の作業中です。気付いた事項を追記し、第 3 ゲートの前に文書を再構築して整理します。上流文書が存在する場合は、各課題の背景と見送りの判断を上流文書で確認します。存在しない場合は、この文書を単体の残課題一覧として扱います。このファイルの残課題を参照して新たな成果物の作成または更新を始めるときは、元案件の再開とは別の作業として扱います。その開始には agree-before-implement を原則として使い、新しい全体管理文書と検討用 Markdown から開始してください。継続作業によってこのファイルの残課題を対策する場合は、このファイルや各項目の記載を削除することなく、継続作業の開始時 (全体管理文書と検討用 Markdown の作成時) から検討・設計・実装・整理の各段階において、このファイルのメタ情報、各項目の状態、および経緯と対処を随時更新することを原則とします。また、フェーズ分けした対策で対処できていない項目がある場合は、当該継続作業の backlog にも必ず転記し、最新作業の backlog を見れば残件が把握できるようにしてください。最終更新エージェントのセッション情報や稼働 OS・最終更新日時が参照可能であれば再開時のコンテキストや環境差分の把握に利用し、別エージェントや別環境・別 OS からの引き継ぎ、担当変更によりセッションが見つからない場合も異常とせず、文書の記載から継続してください。
 -->
 
@@ -25,7 +25,7 @@
 
 | 課題 ID | 題名 | 区分 | 優先度 / 影響度 | 状態 |
 | --- | --- | --- | --- | --- |
-| BL-001 | cJSON 本体にパッチ 0003 が当たっていることを、ビルド時に検査していない | 作業中摘出 | 中 | 未着手 |
+| BL-001 | cJSON 本体にパッチ 0003 が当たっていることを、ビルド時に検査していない | 作業中摘出 | 中 | 完了 (承認待ち) |
 
 ## BL-001 cJSON 本体にパッチ 0003 が当たっていることを、ビルド時に検査していない
 
@@ -40,7 +40,7 @@
 
 - **摘出契機**: 実装作業中に発見。継続作業 `261125-consumable-backlog-items` (`app/general/docs/prompts/current/`) の統合の単位 U3 (BL-012) の実装の後、ユーザーの指摘 (2026-11-26 の対話「パッチ版かどうかをマーカーと static_assert でチェックすべきと思う。同意したら backlog を書いて」) を受けて起票しました。ユーザーの指示 (同日の対話「app_cjson の backlog だと思う」) により、`app/cjson` の残課題一覧として記録します。
 - **今回の見送り理由**: 継続作業 `261125-consumable-backlog-items` の最終仕様の BL-012 の範囲 (`global_error` のスレッド ローカル化と、JSONC の共通ロックの削除) の外です。マーカーの置き場所 (パッチで `cJSON.h` に足すか、`app/cjson` の第一者管理のヘッダーに置くか) と、検査する側 (JSONC のラッパー、porter など利用側) の範囲を決める必要があるため、別途扱います。
-- **継続作業での経緯と対処**: なし。
+- **継続作業での経緯と対処**: 2026-11-28 に継続作業 `261128-cjson-patch-marker` を開始しました。下流文書は `261128-cjson-patch-marker-overview.md` (全体管理文書)、`261128-cjson-patch-marker-discussion.md` (検討用 Markdown、Q-001 〜 Q-009)、`261128-cjson-patch-marker-lightadr.md` (簡易 ADR)、`261128-cjson-patch-marker-backlog.md` (残課題一覧) です。2026-11-28 12:51 に版 1 (Q-001 〜 Q-006)、2026-11-28 13:02 に版 2 (Q-007 〜 Q-009) の回答 (対話セッション) を記録し、全論点が合意済みになりました。合意した方針は、パッチ 0003 で `prod/include/cJSON.h` のインクルード ガードの内側に `CJSON_APP_PATCH_THREAD_LOCAL_GLOBAL_ERROR` (値 `1`) を定義すること、検査を `app/cjson` の検査用の公開ヘッダー 1 か所に定義し、`cJSON_JSONC.h` と、`<cJSON.h>` だけを取り込む利用側 (`app/porter`、`app/struct-meta`、`app/cjson` 内の利用側) が取り込むこと、検査用のヘッダーで `<assert.h>` を取り込み、未定義は `#ifndef` と `#error`、定義済みは `#else` の `static_assert` で値 `1` を検証すること、`cJSON_JSONC.c` の既存の `_Static_assert` 3 か所も `static_assert` へ統一すること、Linux の GCC でコンパイルの失敗を `bin_test` で自動検証すること、`app/cjson`、`app/porter`、`app/struct-meta` (`docs/architecture.md`) の文書を更新することです。推奨される対応策 4 (動的リンクの取り違えへの実行時照合) は、対象外とし、残課題にもしないことが決まりました。2026-11-28 13:07 に第 1 ゲートを通過し、最終仕様 `261128-cjson-patch-marker-design.md` を作成しました (検査用公開ヘッダー名 `app/cjson/prod/include/cJSON_PatchCheck.h`、直接取り込み対象 12 ファイル、新規 Linux 向けテスト `app/cjson/bin_test/test_patch_marker_check.py`)。2026-11-28 13:18 に第 2 ゲート (最終仕様の承認) を通過し、第 1 段 (新規ヘッダー、`bin_test`、関連文書) と第 2 段 (パッチ 0003 へのマーカー追加、レビュー指摘によるエラー メッセージの日本語化、`cJSON_JSONC.h` / `cJSON_JSONC.c` および利用側 12 ファイルの更新、4 app の局所ビルド・単体テスト・`.warn` 確認・`app/cjson/bin_test` 実行・scratchpad でのパッチ未適用時コンパイル失敗確認) をすべて完了しました。現在、第 3 ゲート (成果物の承認) 待ちです。
 
 ### 影響範囲とリスク
 

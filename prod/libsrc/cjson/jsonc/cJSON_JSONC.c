@@ -14,6 +14,7 @@
 #include <cJSON_JSONC.h>
 #include <cjson_app_thread_local.h>
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -44,10 +45,10 @@ typedef union jsonc_block_header
     max_align_t alignment;
 } jsonc_block_header;
 
-_Static_assert(_Alignof(jsonc_block_header) >= _Alignof(max_align_t), "JSONC の確保ヘッダーの整列が不足しています");
-_Static_assert(sizeof(jsonc_block_header) % _Alignof(max_align_t) == 0U,
-               "JSONC の確保ヘッダーの大きさが整列の倍数ではありません");
-_Static_assert(sizeof(jsonc_block_header) > 0U, "JSONC の確保ヘッダーが空です");
+static_assert(_Alignof(jsonc_block_header) >= _Alignof(max_align_t), "JSONC の確保ヘッダーの整列が不足しています");
+static_assert(sizeof(jsonc_block_header) % _Alignof(max_align_t) == 0U,
+              "JSONC の確保ヘッダーの大きさが整列の倍数ではありません");
+static_assert(sizeof(jsonc_block_header) > 0U, "JSONC の確保ヘッダーが空です");
 
 /* このスレッドで、フックが確保に失敗した回数です。解析の開始時の値と比べます。 */
 static CJSON_APP_THREAD_LOCAL size_t jsonc_allocation_failure_count = 0U;
