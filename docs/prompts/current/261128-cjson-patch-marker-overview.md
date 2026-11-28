@@ -1,8 +1,8 @@
 <!--
 生成元: agree-before-implement スキル
 文書種別: 全体管理文書 (overview)
-最終更新日時: 2026-11-28 18:08:00 JST
-最終更新エージェント: agy / セッション ID: f1717ab7-aaa3-487b-8275-84c421514770
+最終更新日時: 2026-11-29 03:02:00 JST
+最終更新エージェント: agy / セッション ID: a9536170-add8-45c9-a458-9b5dcbc3132a
 稼働 OS: Linux (WSL)
 上流文書: `261126-cjson-patch-check-backlog.md` (対策元の残課題一覧、BL-001)。削除されている場合があります。
 下流文書: `261128-cjson-patch-marker-discussion.md` (検討用 Markdown)、`261128-cjson-patch-marker-lightadr.md` (簡易 ADR)、`261128-cjson-patch-marker-design.md` (最終仕様)、`261128-cjson-patch-marker-backlog.md` (残課題一覧)。未作成の場合や、削除されている場合があります。
@@ -168,6 +168,7 @@
 | 2026-11-28 13:18 | 第 2 ゲート通過・フェーズ 4 第 1 段着手 | 2026-11-28、対話セッションで Tetsuo Honda が最終仕様 (`261128-cjson-patch-marker-design.md`) を承認 (第 2 ゲート通過)。並行ビルドへの影響を避けるため、フェーズ 4 を第 1 段 (新規ヘッダー、`bin_test`、文書、`porter_spec.h`) と第 2 段 (パッチ、既存 C/C++、ビルド・テスト実行) に分けて第 1 段を開始 |
 | 2026-11-28 13:22 | フェーズ 4 第 1 段完了・第 2 段待ち | WBS 4.2、4.6.1、4.6.2、4.7.1、4.7.2、4.7.3 を完了。別作業が `app/cplat` 等を並行ビルド中のため、ビルドへ影響する WBS 4.1、4.3、4.4、4.5、4.8 以降は第 2 段待ちとして停止 |
 | 2026-11-28 18:08 | フェーズ 4 第 2 段完了・第 3 ゲート待ち | WBS 4.1、4.3、4.4.x、4.5、4.8 〜 4.11 およびレビュー指摘 (`cJSON_PatchCheck.h` の `#error` / `static_assert` メッセージの日本語化と `test_patch_marker_check.py` の追従) を完了。4 app のビルド・テスト・`.warn` 確認・`app/cjson/bin_test`・scratchpad でのパッチ未適用検証をすべて通過し、第 3 ゲート (成果物の承認の受付) で停止 |
+| 2026-11-29 03:02 | CI・Windows 検証結果の追記 | CI run 46130821391 (2026-11-28、`main` `499a18f8`) と Windows 側の Claude Code セッションでの確認結果 (`app/cjson`、`app/cplat`、`app/porter`、`app/struct-meta`、および成果物コミット `0470f8c` / `953a780` / `499a18f8`) を「反映と検証の記録」へ追記。WBS 5.2 (第 3 ゲート) を維持 |
 
 ## 反映と検証の記録
 
@@ -191,3 +192,20 @@
     - 内容がある `.warn` ファイル (`app/cjson`、`app/cplat`、`app/porter`、`app/struct-meta`): 0 件
     - 一時領域 (scratchpad) でのパッチ `0003` 未適用時の検証: `extract_package.py` でパッチ `0001`・`0002` のみ適用した `cJSON.h` に対し、C17 (`gcc`) / C++17 (`g++`) の双方で `#error "cJSON にパッチ 0003 (global_error のスレッド ローカル化) が当たっていません"` によりコンパイルが失敗することを確認 (終了コード 1)
 - **WBS 4.9 〜 4.11**: 受入条件 1〜7 の適合を確認し、対策元 `261126-cjson-patch-check-backlog.md` の BL-001 を「完了 (承認待ち)」へ更新、簡易 ADR (`261128-cjson-patch-marker-lightadr.md`) の LADR-004 経緯へレビュー指摘反映を追記、残課題一覧 (`261128-cjson-patch-marker-backlog.md`) を「整理済み」へ再構築。変更した Markdown は `text_style_jp.py` で確認済み。
+
+### CI・Windows 検証結果 (2026-11-28 追記)
+
+- **成果物コミット**:
+    - `app/cjson`: `0470f8c`
+    - `app/porter`: `953a780`
+    - ルート (`c-modernization-kit`): `499a18f8`
+- **CI 検証結果 (CI run `46130821391`、`main` `499a18f8`、2026-11-28)**:
+    - Linux の 3 ジョブ (`ol8`、`ol9`、`ol10`)、`docs`、`verify-gen`、`warnings-summary` は成功。
+    - `build-and-test-windows` は、`app/process-orchestration-sample` の `ipc_transport_unix_windows.c` のコンパイル エラー (`CPLAT_ONCE_INIT`、`g_wsa_once`、`WSAENOENT` が未定義。本案件の範囲外であり、別案件 `261128-process-orchestration-sample-review-fix` で対処) で Build 段階が停止し、テストは未実行。
+    - CI ログにおいて、`app/cjson` の `cJSON_PatchCheck.h`、`app/porter`、`app/struct-meta` が MSVC でコンパイルおよびリンクを通過していることを確認。
+- **Windows 側の Claude Code セッションでの確認 (2026-11-28、`main` `499a18f8`、`TESTFW_WINDOWS_VARIANTS=md`、`make` は 1 本ずつ実行)**:
+    - `app/cjson`: 36 件成功・失敗 0。`bin_test` 9 件 OK (`skipped=4`。うち `test_patch_marker_check.py` の 3 件は Linux 専用のためスキップ)。
+    - `app/cplat`: 1844 件成功・失敗 0 (`serviceCommonTest` 21、`serviceWindowsTest` 14、`exportTest` 2 を含む)。
+    - `app/porter`: 979 件成功・失敗 0。
+    - `app/struct-meta`: 128 件成功・失敗 0。
+    - 内容がある `.warn` はなし。
